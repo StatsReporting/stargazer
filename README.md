@@ -8,6 +8,12 @@ The python package is object oriented now with chained commands to make changes 
 
 I'm a data scientist, not a software engineer so please don't crucify me over my bad code. Thanks in advance :D
 
+## Installation
+
+You can install this package with `pip install stargazer`. It depends on `statsmodels`, which in turn depends on several other libraries like `pandas`, `numpy`, etc. It's still in development so there may be bugs and only HTML output is supported currently. 
+
+Future release should (hopefully) include LaTeX and Markdown support. 
+
 ## Example
 
 Here is an examples of how to quickly get started with the library. More examples can be found in the `examples.ipynb` file in the github repo. The examples all use the scikit-learn diabetes dataset, but it is not a dependency for the package.
