@@ -192,15 +192,16 @@ class Stargazer:
 
         header += '<table style="text-align:center"><tr><td colspan="'
         header += str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
-        header += '<td style="text-align:left"></td><td colspan="' + str(self.num_models)
+        header += '<tr><td style="text-align:left"></td><td colspan="' + str(self.num_models)
         header += '"><em>' + self.dep_var_name + '</em></td></tr>'
 
-        header += '<tr><td style="text-align:left">'
+        header += '<tr><td style="text-align:left"></td>'
         if self.column_labels is not None:
             if type(self.column_labels) == str:
                 header += '<td colspan="' + str(self.num_models) + '">'
                 header += self.column_labels + "</td></tr>"
             else:
+                header += '<tr>'
                 for i, label in enumerate(self.column_labels):
                     header += '<td colspan="' + str(self.column_separators[i])
                     header += '">' + label + '</td>'
@@ -212,8 +213,8 @@ class Stargazer:
                 header += '<td>(' + str(num) + ')</td>'
             header += '</tr>'
 
-        header += '<td colspan="' + str(self.num_models + 1)
-        header += '" style="border-bottom: 1px solid black">'
+        header += '<tr><td colspan="' + str(self.num_models + 1)
+        header += '" style="border-bottom: 1px solid black"></td></tr>'
 
         return header
 
@@ -300,7 +301,7 @@ class Stargazer:
         footer += self.generate_r2_adj_html()
         footer += self.generate_resid_std_err_html()
         footer += self.generate_f_statistic_html()
-        footer += '<td colspan="' + str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
+        footer += '<tr><td colspan="' + str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
         footer += self.generate_notes_html()
         footer += '</table>'
 
@@ -378,9 +379,9 @@ class Stargazer:
 
     def generate_p_value_section_html(self):
         notes_text = ''
-        notes_text += '<td colspan="' + str(self.num_models) + '" style="text-align: right"><em>p<' + str(self.sig_levels[0]) + '</em>; '
-        notes_text += '<b>p<' + str(self.sig_levels[1]) + '</b>; '
-        notes_text += 'p<' + str(self.sig_levels[2]) + '</td></tr>'
+        notes_text += '<td colspan="' + str(self.num_models) + '" style="text-align: right"><em>p&lt;' + str(self.sig_levels[0]) + '</em>; '
+        notes_text += '<b>p&lt;' + str(self.sig_levels[1]) + '</b>; '
+        notes_text += 'p&lt;' + str(self.sig_levels[2]) + '</td></tr>'
         return notes_text
 
     def generate_additional_notes(self):
