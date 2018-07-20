@@ -4,11 +4,10 @@ regression results similar to the style of the R
 package of the same name:
 https://CRAN.R-project.org/package=stargazer
 
-Site I'm using to achieve feature parity:
-https://www.jakeruss.com/cheatsheets/stargazer/
-
 @authors:
-    Matthew Burke
+    Matthew Burke:
+        matthew.wesley.burke@gmail.com
+        github.com/mwburke
 """
 
 from __future__ import print_function
@@ -35,7 +34,9 @@ class Stargazer:
     def validate_input(self):
         """
         Check inputs to see if they are going to
-        cause any problems further down the line
+        cause any problems further down the line.
+
+        Any future checking will be added here.
         """
         targets = []
 
@@ -65,7 +66,6 @@ class Stargazer:
         self.show_model_nums = True
         self.original_cov_names = None
         self.cov_map = None
-        # self.const_bottom = True
         self.show_precision = True
         self.show_sig = True
         self.sig_levels = [0.1, 0.05, 0.01]
@@ -93,12 +93,30 @@ class Stargazer:
         self.validate_input()
         self.model_data = []
         for m in self.models:
-            self.model_data.append(extract_model_data(m))
+            self.model_data.append(self.extract_model_data(m))
 
         covs = []
         for md in self.model_data:
             covs = covs + list(md['cov_names'])
         self.cov_names = sorted(set(covs))
+
+    def extract_model_data(self, model):
+        data = {}
+        data['cov_names'] = model.params.index.values
+        data['cov_values'] = model.params
+        data['p_values'] = model.pvalues
+        data['cov_std_err'] = model.bse
+        data['conf_int_low_values'] = model.conf_int()[0]
+        data['conf_int_high_values'] = model.conf_int()[1]
+        data['r2'] = model.rsquared
+        data['r2_adj'] = model.rsquared_adj
+        data['resid_std_err'] = sqrt(model.scale)
+        data['f_statistic'] = model.fvalue
+        data['f_p_value'] = model.f_pvalue
+        data['degree_freedom'] = model.df_model
+        data['degree_freedom_resid'] = model.df_resid
+
+        return data
 
     # Begin render option functions
     def title(self, title):
@@ -373,7 +391,7 @@ class Stargazer:
 
         if self.notes_append:
             notes_text += self.generate_p_value_section_html()
-        notes_text += self.generate_additional_notes()
+        notes_text += self.generate_additional_notes_html()
 
         return notes_text
 
@@ -384,7 +402,7 @@ class Stargazer:
         notes_text += 'p&lt;' + str(self.sig_levels[2]) + '</td></tr>'
         return notes_text
 
-    def generate_additional_notes(self):
+    def generate_additional_notes_html(self):
         notes_text = ''
         if len(self.custom_notes) == 0:
             return notes_text
@@ -396,29 +414,231 @@ class Stargazer:
 
         return notes_text
 
-    # Begin LaTeX render functions (once I get around to it...)
+    # Begin LaTeX render functions
     def render_latex(self):
-        print("sorry haven't made this yet :/")
+        latex = ''
+        latex += self.generate_header_latex()
+        latex += self.generate_body_latex()
+        latex += self.generate_footer_latex()
+
+        return latex
+
+    def generate_header_latex(self):
+        header = '\\begin{table}[!htbp] \\centering\n'
+        if not self.show_header:
+            return header
+
+        if self.title_text is not None:
+            header += '  \\caption{' + self.title_text + '}\n'
+
+        header += '  \\label{}\n\\begin{tabular}{@{\\extracolsep{5pt}}lcc}\n'
+        header += '\\\\[-1.8ex]\\hline\n'
+        header += '\\hline \\\\[-1.8ex]\n'
+        header += '& \\multicolumn{' + str(self.num_models) + '}{c}'
+        header += '{\\textit{' + self.dep_var_name + '}} \\\n'
+        header += '\\cr \\cline{' + str(self.num_models) + '-' + str(self.num_models + 1) + '}\n'
+
+        if self.column_labels is not None:
+            if type(self.column_labels) == str:
+                header += '\\\\[-1.8ex] & \\multicolumn{' + str(self.num_models) + '}{c}{' + self.column_labels + '} \\\\'
+            else:
+                header += '\\\\[-1.8ex] '
+                for i, label in enumerate(self.column_labels):
+                    header += '& \\multicolumn{' + str(self.column_separators[i])
+                    header += '}{c}{' + label + '} '
+                header += ' \\\\\n'
+
+        if self.show_model_nums:
+            header += '\\\\[-1.8ex] '
+            for num in range(1, self.num_models + 1):
+                header += '& (' + str(num) + ') '
+            header += '\\\\\n'
+
+        header += '\\hline \\\\[-1.8ex]\n'
+
+        return header
+
+    def generate_body_latex(self):
+        """
+        Generate the body of the results where the
+        covariate reporting is.
+        """
+        body = ''
+        for cov_name in self.cov_names:
+            body += self.generate_cov_rows_latex(cov_name)
+            body += '  '
+            for i in range(self.num_models):
+                body += '& '
+            body += '\\\\\n'
+
+        return body
+
+    def generate_cov_rows_latex(self, cov_name):
+        cov_text = ''
+        cov_text += self.generate_cov_main_latex(cov_name)
+        if self.show_precision:
+            cov_text += self.generate_cov_precision_latex(cov_name)
+        else:
+            cov_text += '& '
+
+        return cov_text
+
+    def generate_cov_main_latex(self, cov_name):
+        cov_print_name = cov_name
+
+        if self.cov_map is not None:
+            if cov_name in self.cov_map:
+                cov_print_name = self.cov_map[cov_name]
+
+        cov_text = ' ' + cov_print_name + ' '
+        for md in self.model_data:
+            if cov_name in md['cov_names']:
+                cov_text += '& ' + str(round(md['cov_values'][cov_name], self.sig_digits))
+                if self.show_sig:
+                    cov_text += '$^{' + str(self.get_sig_icon(md['p_values'][cov_name])) + '}$'
+                cov_text += ' '
+            else:
+                cov_text += '& '
+        cov_text += '\\\\\n'
+
+        return cov_text
+
+    def generate_cov_precision_latex(self, cov_name):
+        cov_text = '  '
+
+        for md in self.model_data:
+            if cov_name in md['cov_names']:
+                cov_text += '& ('
+                if self.confidence_intervals:
+                    cov_text += str(round(md['conf_int_low_values'][cov_name], self.sig_digits)) + ' , '
+                    cov_text += str(round(md['conf_int_high_values'][cov_name], self.sig_digits))
+                else:
+                    cov_text += str(round(md['cov_std_err'][cov_name], self.sig_digits))
+                cov_text += ') '
+            else:
+                cov_text += '& '
+        cov_text += '\\\\\n'
+
+        return cov_text
+
+    def generate_footer_latex(self):
+        """
+        Generate the footer of the table where
+        model summary section is.
+        """
+
+        footer = '\\hline \\\\[-1.8ex]\n'
+
+        if not self.show_footer:
+            return footer
+        footer += self.generate_observations_latex()
+        footer += self.generate_r2_latex()
+        footer += self.generate_r2_adj_latex()
+        footer += self.generate_resid_std_err_latex()
+        footer += self.generate_f_statistic_latex()
+        footer += '\\hline\n\\hline \\\\[-1.8ex]\n'
+        footer += self.generate_notes_latex()
+        footer += '\\end{tabular}\n\\end{table}'
+
+        return footer
+
+    def generate_observations_latex(self):
+        obs_text = ''
+        if not self.show_n:
+            return obs_text
+        obs_text += ' Observations '
+        for md in self.model_data:
+            obs_text += '& ' + str(md['degree_freedom'] + md['degree_freedom_resid'] + 1) + ' '
+        obs_text += '\\\\\n'
+        return obs_text
+
+    def generate_r2_latex(self):
+        r2_text = ''
+        if not self.show_r2:
+            return r2_text
+        r2_text += ' R${2}$ '
+        for md in self.model_data:
+            r2_text += '& ' + str(round(md['r2'], self.sig_digits)) + ' '
+        r2_text += '\\\\\n'
+        return r2_text
+
+    def generate_r2_adj_latex(self):
+        r2_text = ''
+        if not self.show_r2:
+            return r2_text
+        r2_text += ' Adjusted R${2}$ '
+        for md in self.model_data:
+            r2_text += '& ' + str(round(md['r2_adj'], self.sig_digits)) + ' '
+        r2_text += '\\\\\n'
+        return r2_text
+
+    def generate_resid_std_err_latex(self):
+        rse_text = ''
+        if not self.show_r2:
+            return rse_text
+        rse_text += ' Residual Std. Error '
+        for md in self.model_data:
+            rse_text += '& ' + str(round(md['resid_std_err'], self.sig_digits))
+            if self.show_dof:
+                rse_text += '(df = ' + str(round(md['degree_freedom_resid'])) + ')'
+            rse_text += ' '
+        rse_text += ' \\\\\n'
+        return rse_text
+
+    def generate_f_statistic_latex(self):
+        f_text = ''
+        if not self.show_r2:
+            return f_text
+
+        f_text += ' F Statistic '
+
+        for md in self.model_data:
+            f_text += '& ' + str(round(md['f_statistic'], self.sig_digits))
+            f_text += '$^{' + self.get_sig_icon(md['f_p_value']) + '}$ '
+            if self.show_dof:
+                f_text += '(df = ' + str(md['degree_freedom']) + '; ' + str(md['degree_freedom_resid']) + ')'
+            f_text += ' '
+        f_text += '\\\\\n'
+        return f_text
+
+    def generate_notes_latex(self):
+        notes_text = ''
+        if not self.show_notes:
+            return notes_text
+
+        notes_text += '\\textit{' + self.notes_label + '}'
+
+        if self.notes_append:
+            notes_text += self.generate_p_value_section_latex()
+        notes_text += self.generate_additional_notes_latex()
+
+        return notes_text
+
+    def generate_p_value_section_latex(self):
+        notes_text = ''
+        notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}{$^{' + self.get_sig_icon(self.sig_levels[0] - 0.001) + '}$p$<$' + str(self.sig_levels[0]) + '; '
+        notes_text += '$^{' + self.get_sig_icon(self.sig_levels[1] - 0.001) + '}$p$<$' + str(self.sig_levels[1]) + '; '
+        notes_text += '$^{' + self.get_sig_icon(self.sig_levels[2] - 0.001) + '}$p$<$' + str(self.sig_levels[2]) + '} \\\\\n'
+        return notes_text
+
+    def generate_additional_notes_latex(self):
+        notes_text = ''
+        # if len(self.custom_notes) == 0:
+        #     return notes_text
+        i = 0
+        for i, note in enumerate(self.custom_notes):
+            # if (i != 0) | (self.notes_append):
+            #     notes_text += '\\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + note + '} \\\\\n'
+            # else:
+            #     notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + note + '} \\\\\n'
+            notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + note + '} \\\\\n'
+
+        return notes_text
 
     # Begin Markdown render functions
-    def render_markdown(self):
-        print("sorry haven't made this yet :/")
+    # def render_markdown(self):
+    #     print("sorry haven't made this yet :/")
 
-
-def extract_model_data(model):
-    data = {}
-    data['cov_names'] = model.params.index.values
-    data['cov_values'] = model.params
-    data['p_values'] = model.pvalues
-    data['cov_std_err'] = model.bse
-    data['conf_int_low_values'] = model.conf_int()[0]
-    data['conf_int_high_values'] = model.conf_int()[1]
-    data['r2'] = model.rsquared
-    data['r2_adj'] = model.rsquared_adj
-    data['resid_std_err'] = sqrt(model.scale)
-    data['f_statistic'] = model.fvalue
-    data['f_p_value'] = model.f_pvalue
-    data['degree_freedom'] = model.df_model
-    data['degree_freedom_resid'] = model.df_resid
-
-    return data
+    # Begin ASCII render functions
+    # def render_ascii(self):
+    #     print("sorry haven't made this yet :/")
