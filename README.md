@@ -6,11 +6,9 @@ There is an experimental function in the [statsmodels.regression.linear_model.OL
 
 The python package is object oriented now with chained commands to make changes to the rendering parameters, which is hopefully more pythonic and the user doesn't have to put a bunch of arguments in a single function.
 
-I'm just making this in my free time, so please feel free to contribute or log issues when you see them.
-
 ## Installation
 
-You can install this package with `pip install stargazer` or just clone the repo and take the `stargazer.py` file since it's the only one in the package.
+You can install this package through PyPi with `pip install stargazer` or just clone the repo and take the `stargazer.py` file since it's the only one in the package.
 
 ### Dependencies
 
@@ -18,7 +16,7 @@ It depends on `statsmodels`, which in turn depends on several other libraries li
 
 ## TODO
 
-Here's some things I'd like to do ~~but will never get to~~ when I have time.
+Here's some things I'd like to do when I have time.
 
 ✔ HTML support
 
@@ -28,8 +26,28 @@ Here's some things I'd like to do ~~but will never get to~~ when I have time.
 
 ☐ ASCII support (maybe?)
 
-☐ Fixing those ugly lookin pluses to make strings by using .format like a regular person
 
+## Editing Features
+
+This library implements many of the cusotmization features found in the original package. Examples of most can be found [in the examples jupyter notebook](https://github.com/mwburke/stargazer/blob/master/examples.ipynb) and a full list of the methods/features is here below:
+
+* `title`: custom title
+* `show_header`: display or hide model header data
+* `show_model_numbers`: display or hide model numbers
+* `custom_columns`: custom model names and model groupings
+* `significance_levels`: change statistical significance thresholds
+* `significant_digits`: change number of significant digits
+* `show_confidence_intervals`: display confidence intervals instead of variance
+* `dependent_variable_name`: rename dependent variable
+* `rename_covariates`: rename covariates
+* `covariate_order`: reorder covariates
+* `reset_covariate_order`: reset covariate order to original ordering
+* `show_degrees_of_freedom`: display or hide degrees of freedom
+* `custom_note_label`: label notes section at bottom of table
+* `add_custom_notes`: add custom notes to section at bottom of the table
+* `append_notes`: display or hide statistical significance thresholds
+
+These features are agnostic of the rendering type and will be applied whether the user outputs in HTML, LaTeX, etc
 
 ## Example
 
@@ -69,4 +87,4 @@ stargazer.render_html()
 stargazer.render_latex()
 ```
 
-![](latex_example.png)
+![](https://raw.githubusercontent.com/mwburke/stargazer/master/latex_example.png)
