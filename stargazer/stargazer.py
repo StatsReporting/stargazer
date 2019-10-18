@@ -41,7 +41,7 @@ class Stargazer:
         targets = []
 
         for m in self.models:
-            if type(m) != RegressionResultsWrapper:
+            if not isinstance(m, RegressionResultsWrapper):
                 raise ValueError('Please use trained OLS models as inputs')
             targets.append(m.model.endog_names)
 
