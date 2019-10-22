@@ -391,15 +391,20 @@ class Stargazer:
 
         if self.notes_append:
             notes_text += self.generate_p_value_section_html()
+
+        notes_text += '</tr>'
+
         notes_text += self.generate_additional_notes_html()
 
         return notes_text
 
     def generate_p_value_section_html(self):
-        notes_text = ''
-        notes_text += '<td colspan="' + str(self.num_models) + '" style="text-align: right"><em>p&lt;' + str(self.sig_levels[0]) + '</em>; '
-        notes_text += '<b>p&lt;' + str(self.sig_levels[1]) + '</b>; '
-        notes_text += 'p&lt;' + str(self.sig_levels[2]) + '</td></tr>'
+        notes_text = """
+ <td colspan="{}" style="text-align: right">
+  <em><sup>*</sup>p&lt;{}</em>;
+  <b><sup>**</sup>p&lt;{}</b>;
+  <sup>***</sup>p&lt;{}
+ </td>""".format(self.num_models, *self.sig_levels)
         return notes_text
 
     def generate_additional_notes_html(self):
