@@ -219,10 +219,11 @@ class Stargazer:
                 header += '<td colspan="' + str(self.num_models) + '">'
                 header += self.column_labels + "</td></tr>"
             else:
-                header += '<tr>'
+                # The first table column holds the covariates names:
+                header += '<tr><td></td>'
                 for i, label in enumerate(self.column_labels):
-                    header += '<td colspan="' + str(self.column_separators[i])
-                    header += '">' + label + '</td>'
+                    sep = self.column_separators[i]
+                    header += '<td colspan="{}">{}</td>'.format(sep, label)
                 header += '</tr>'
 
         if self.show_model_nums:
