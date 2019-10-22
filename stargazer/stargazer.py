@@ -167,8 +167,7 @@ class Stargazer:
         self.cov_names = cov_names
 
     def rename_covariates(self, cov_map):
-        assert type(cov_map) == dict, 'Please input a dictionary with covariate names as keys'
-        assert set(self.cov_names).issuperset([k for k in cov_map.keys()])
+        assert isinstance(cov_map, dict), 'Please input a dictionary with covariate names as keys'
         self.cov_map = cov_map
 
     def reset_covariate_order(self):
@@ -260,8 +259,7 @@ class Stargazer:
     def generate_cov_main_html(self, cov_name):
         cov_print_name = cov_name
         if self.cov_map is not None:
-            if cov_name in self.cov_map:
-                cov_print_name = self.cov_map[cov_name]
+            cov_print_name = self.cov_map.get(cov_print_name, cov_name)
         cov_text = '<tr><td style="text-align:left">' + cov_print_name + '</td>'
         for md in self.model_data:
             if cov_name in md['cov_names']:
