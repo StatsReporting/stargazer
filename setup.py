@@ -18,4 +18,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ),
+    requires=[
+        "tabulate>=0.8.3",
+    ],
 )
