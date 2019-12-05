@@ -295,8 +295,6 @@ class Stargazer:
 
         return cov_text
 
-        return ''
-
     def get_sig_icon(self, p_value, sig_char='*'):
         if p_value >= self.sig_levels[0]:
             return ''
@@ -405,8 +403,8 @@ class Stargazer:
     def generate_p_value_section_html(self):
         notes_text = """
  <td colspan="{}" style="text-align: right">
-  <em><sup>*</sup>p&lt;{}</em>;
-  <b><sup>**</sup>p&lt;{}</b>;
+  <sup>*</sup>p&lt;{};
+  <sup>**</sup>p&lt;{};
   <sup>***</sup>p&lt;{}
  </td>""".format(self.num_models, *self.sig_levels)
         return notes_text
@@ -481,7 +479,7 @@ class Stargazer:
         for cov_name in self.cov_names:
             body += self.generate_cov_rows_latex(cov_name)
             body += '  '
-            for i in range(self.num_models):
+            for _ in range(self.num_models):
                 body += '& '
             body += '\\\\\n'
 
@@ -644,8 +642,7 @@ class Stargazer:
         notes_text = ''
         # if len(self.custom_notes) == 0:
         #     return notes_text
-        i = 0
-        for i, note in enumerate(self.custom_notes):
+        for note in self.custom_notes:
             # if (i != 0) | (self.notes_append):
             #     notes_text += '\\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + note + '} \\\\\n'
             # else:

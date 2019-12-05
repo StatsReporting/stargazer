@@ -14,22 +14,9 @@ You can install this package through PyPi with `pip install stargazer` or just c
 
 It depends on `statsmodels`, which in turn depends on several other libraries like `pandas`, `numpy`, etc
 
-## TODO
-
-Here's some things I'd like to do when I have time.
-
-✔ HTML support
-
-✔ LaTeX support
-
-☐ Markdown support (maybe?)
-
-☐ ASCII support (maybe?)
-
-
 ## Editing Features
 
-This library implements many of the cusotmization features found in the original package. Examples of most can be found [in the examples jupyter notebook](https://github.com/mwburke/stargazer/blob/master/examples.ipynb) and a full list of the methods/features is here below:
+This library implements many of the customization features found in the original package. Examples of most can be found [in the examples jupyter notebook](https://github.com/mwburke/stargazer/blob/master/examples.ipynb) and a full list of the methods/features is here below:
 
 * `title`: custom title
 * `show_header`: display or hide model header data
