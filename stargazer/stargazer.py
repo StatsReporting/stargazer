@@ -162,7 +162,9 @@ class Stargazer:
         self.dep_var_name = name
 
     def covariate_order(self, cov_names):
-        assert set(self.cov_names).issuperset(set(cov_names)), 'Covariate order must contain subset of existing covariates'
+        missing = set(cov_names).difference(set(self.cov_names))
+        assert not missing, ('Covariate order must contain subset of existing '
+                             'covariates: {} are not.'.format(missing))
         self.original_cov_names = self.cov_names
         self.cov_names = cov_names
 
