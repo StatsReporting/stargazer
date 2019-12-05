@@ -167,8 +167,7 @@ class Stargazer:
         self.cov_names = cov_names
 
     def rename_covariates(self, cov_map):
-        assert type(cov_map) == dict, 'Please input a dictionary with covariate names as keys'
-        assert set(self.cov_names).issuperset([k for k in cov_map.keys()])
+        assert isinstance(cov_map, dict), 'Please input a dictionary with covariate names as keys'
         self.cov_map = cov_map
 
     def reset_covariate_order(self):
@@ -219,10 +218,11 @@ class Stargazer:
                 header += '<td colspan="' + str(self.num_models) + '">'
                 header += self.column_labels + "</td></tr>"
             else:
-                header += '<tr>'
+                # The first table column holds the covariates names:
+                header += '<tr><td></td>'
                 for i, label in enumerate(self.column_labels):
-                    header += '<td colspan="' + str(self.column_separators[i])
-                    header += '">' + label + '</td>'
+                    sep = self.column_separators[i]
+                    header += '<td colspan="{}">{}</td>'.format(sep, label)
                 header += '</tr>'
 
         if self.show_model_nums:
@@ -260,8 +260,7 @@ class Stargazer:
     def generate_cov_main_html(self, cov_name):
         cov_print_name = cov_name
         if self.cov_map is not None:
-            if cov_name in self.cov_map:
-                cov_print_name = self.cov_map[cov_name]
+            cov_print_name = self.cov_map.get(cov_print_name, cov_name)
         cov_text = '<tr><td style="text-align:left">' + cov_print_name + '</td>'
         for md in self.model_data:
             if cov_name in md['cov_names']:
@@ -319,7 +318,8 @@ class Stargazer:
         footer += self.generate_r2_adj_html()
         if self.show_residual_std_err:
             footer += self.generate_resid_std_err_html()
-        footer += self.generate_f_statistic_html()
+        if self.show_f_statistic:
+            footer += self.generate_f_statistic_html()
         footer += '<tr><td colspan="' + str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
         footer += self.generate_notes_html()
         footer += '</table>'
@@ -392,15 +392,20 @@ class Stargazer:
 
         if self.notes_append:
             notes_text += self.generate_p_value_section_html()
+
+        notes_text += '</tr>'
+
         notes_text += self.generate_additional_notes_html()
 
         return notes_text
 
     def generate_p_value_section_html(self):
-        notes_text = ''
-        notes_text += '<td colspan="' + str(self.num_models) + '" style="text-align: right"><em>p&lt;' + str(self.sig_levels[0]) + '</em>; '
-        notes_text += '<b>p&lt;' + str(self.sig_levels[1]) + '</b>; '
-        notes_text += 'p&lt;' + str(self.sig_levels[2]) + '</td></tr>'
+        notes_text = """
+ <td colspan="{}" style="text-align: right">
+  <em><sup>*</sup>p&lt;{}</em>;
+  <b><sup>**</sup>p&lt;{}</b>;
+  <sup>***</sup>p&lt;{}
+ </td>""".format(self.num_models, *self.sig_levels)
         return notes_text
 
     def generate_additional_notes_html(self):
@@ -416,23 +421,27 @@ class Stargazer:
         return notes_text
 
     # Begin LaTeX render functions
-    def render_latex(self):
+    def render_latex(self, only_tabular=False):
         latex = ''
-        latex += self.generate_header_latex()
+        latex += self.generate_header_latex(only_tabular=only_tabular)
         latex += self.generate_body_latex()
-        latex += self.generate_footer_latex()
+        latex += self.generate_footer_latex(only_tabular=only_tabular)
 
         return latex
 
-    def generate_header_latex(self):
-        header = '\\begin{table}[!htbp] \\centering\n'
-        if not self.show_header:
-            return header
+    def generate_header_latex(self, only_tabular=False):
+        header = ''
+        if not only_tabular:
+            header += '\\begin{table}[!htbp] \\centering\n'
+            if not self.show_header:
+                return header
 
-        if self.title_text is not None:
-            header += '  \\caption{' + self.title_text + '}\n'
+            if self.title_text is not None:
+                header += '  \\caption{' + self.title_text + '}\n'
 
-        header += '  \\label{}\n\\begin{tabular}{@{\\extracolsep{5pt}}lcc}\n'
+            header += '  \\label{}\n'
+
+        header += '\\begin{tabular}{@{\\extracolsep{5pt}}lcc}\n'
         header += '\\\\[-1.8ex]\\hline\n'
         header += '\\hline \\\\[-1.8ex]\n'
         header += '& \\multicolumn{' + str(self.num_models) + '}{c}'
@@ -522,7 +531,7 @@ class Stargazer:
 
         return cov_text
 
-    def generate_footer_latex(self):
+    def generate_footer_latex(self, only_tabular=False):
         """
         Generate the footer of the table where
         model summary section is.
@@ -537,10 +546,14 @@ class Stargazer:
         footer += self.generate_r2_adj_latex()
         if self.show_residual_std_err:
             footer += self.generate_resid_std_err_latex()
-        footer += self.generate_f_statistic_latex()
+        if self.show_f_statistic:
+            footer += self.generate_f_statistic_latex()
         footer += '\\hline\n\\hline \\\\[-1.8ex]\n'
         footer += self.generate_notes_latex()
-        footer += '\\end{tabular}\n\\end{table}'
+        footer += '\\end{tabular}'
+
+        if not only_tabular:
+            footer += '\n\\end{table}'
 
         return footer
 
