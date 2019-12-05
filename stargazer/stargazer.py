@@ -333,7 +333,7 @@ class Stargazer:
             return obs_text
         obs_text += '<tr><td style="text-align: left">Observations</td>'
         for md in self.model_data:
-            obs_text += '<td>' + str(md['degree_freedom'] + md['degree_freedom_resid'] + 1) + '</td>'
+            obs_text += '<td>' + str(int(md['degree_freedom'] + md['degree_freedom_resid'] + 1)) + '</td>'
         obs_text += '</tr>'
         return obs_text
 
@@ -565,7 +565,7 @@ class Stargazer:
             return obs_text
         obs_text += ' Observations '
         for md in self.model_data:
-            obs_text += '& ' + str(md['degree_freedom'] + md['degree_freedom_resid'] + 1) + ' '
+            obs_text += '& ' + str(int(md['degree_freedom'] + md['degree_freedom_resid'] + 1)) + ' '
         obs_text += '\\\\\n'
         return obs_text
 
