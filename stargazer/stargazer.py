@@ -420,23 +420,27 @@ class Stargazer:
         return notes_text
 
     # Begin LaTeX render functions
-    def render_latex(self):
+    def render_latex(self, only_tabular=False):
         latex = ''
-        latex += self.generate_header_latex()
+        latex += self.generate_header_latex(only_tabular=only_tabular)
         latex += self.generate_body_latex()
-        latex += self.generate_footer_latex()
+        latex += self.generate_footer_latex(only_tabular=only_tabular)
 
         return latex
 
-    def generate_header_latex(self):
-        header = '\\begin{table}[!htbp] \\centering\n'
-        if not self.show_header:
-            return header
+    def generate_header_latex(self, only_tabular=False):
+        header = ''
+        if not only_tabular:
+            header += '\\begin{table}[!htbp] \\centering\n'
+            if not self.show_header:
+                return header
 
-        if self.title_text is not None:
-            header += '  \\caption{' + self.title_text + '}\n'
+            if self.title_text is not None:
+                header += '  \\caption{' + self.title_text + '}\n'
 
-        header += '  \\label{}\n\\begin{tabular}{@{\\extracolsep{5pt}}lcc}\n'
+            header += '  \\label{}\n'
+
+        header += '\\begin{tabular}{@{\\extracolsep{5pt}}lcc}\n'
         header += '\\\\[-1.8ex]\\hline\n'
         header += '\\hline \\\\[-1.8ex]\n'
         header += '& \\multicolumn{' + str(self.num_models) + '}{c}'
@@ -526,7 +530,7 @@ class Stargazer:
 
         return cov_text
 
-    def generate_footer_latex(self):
+    def generate_footer_latex(self, only_tabular=False):
         """
         Generate the footer of the table where
         model summary section is.
@@ -544,7 +548,10 @@ class Stargazer:
             footer += self.generate_f_statistic_latex()
         footer += '\\hline\n\\hline \\\\[-1.8ex]\n'
         footer += self.generate_notes_latex()
-        footer += '\\end{tabular}\n\\end{table}'
+        footer += '\\end{tabular}'
+
+        if not only_tabular:
+            footer += '\n\\end{table}'
 
         return footer
 
