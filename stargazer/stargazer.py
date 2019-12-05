@@ -316,7 +316,8 @@ class Stargazer:
         footer += self.generate_observations_html()
         footer += self.generate_r2_html()
         footer += self.generate_r2_adj_html()
-        footer += self.generate_resid_std_err_html()
+        if self.show_residual_std_err:
+            footer += self.generate_resid_std_err_html()
         if self.show_f_statistic:
             footer += self.generate_f_statistic_html()
         footer += '<tr><td colspan="' + str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
@@ -543,7 +544,8 @@ class Stargazer:
         footer += self.generate_observations_latex()
         footer += self.generate_r2_latex()
         footer += self.generate_r2_adj_latex()
-        footer += self.generate_resid_std_err_latex()
+        if self.show_residual_std_err:
+            footer += self.generate_resid_std_err_latex()
         if self.show_f_statistic:
             footer += self.generate_f_statistic_latex()
         footer += '\\hline\n\\hline \\\\[-1.8ex]\n'
