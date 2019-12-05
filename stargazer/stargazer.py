@@ -12,6 +12,7 @@ https://CRAN.R-project.org/package=stargazer
 
 from __future__ import print_function
 from statsmodels.regression.linear_model import RegressionResultsWrapper
+from tabulate import tabulate
 from numpy import round, sqrt
 
 
@@ -83,6 +84,9 @@ class Stargazer:
         self.notes_label = 'Note:'
         self.notes_append = True
         self.custom_notes = []
+        self.precision_separator = " "
+        self.df_separator = " "
+        self.sig_char = '*'
 
     def extract_data(self):
         """
@@ -192,6 +196,135 @@ class Stargazer:
         assert type(append) == bool, 'Please input True/False'
         self.notes_append = append
 
+    def render_ascii(self):
+        return self.render_markdown()
+
+    def render_markdown(self, tablefmt="plain"):
+        head, body = self.generate_cells(separate_header=True)
+        content = []
+        if self.title_text:
+            content.append(self.title_text)
+            content.append("")
+        if self.dep_var_name:
+            content.append(self.dep_var_name)
+        content.append(tabulate(body, head, tablefmt=tablefmt))
+        if self.show_notes:
+            content.append("")
+            content.append(self.notes_label + " p<{}; p<{}; p<{}".format(*self.sig_levels))
+            if self.custom_notes:
+                content += self.custom_notes
+        return "\n".join(content)
+
+    # Begin cell generation 
+    # Generating an abstract grid of content is useful for a number of downstream applications, 
+    # specifically markdown tables (which don't support colspan or rowspans). 
+    # This necessarily omits niceties which don't fit into the grid, such as title and notes
+    def generate_cells(self, separate_header=False):
+        if separate_header:
+            return self.generate_header_cells(), self.generate_body_cells() + self.generate_footer_cells()
+        else:
+            return self.generate_header_cells() + self.generate_body_cells() + self.generate_footer_cells()
+
+    def generate_header_cells(self):
+        if not self.show_header:
+            return ["" for _ in range(self.num_models)]
+        header_cells = [ [] for _ in range(self.num_models)]
+        if self.column_labels is not None:
+            for cell, label in zip(header_cells, self.get_column_labels()):
+                cell.append(label)
+        if self.show_model_nums:
+            for i, cell in enumerate(header_cells):
+                cell.append("({})".format(i+1))
+        return ["\n".join(cell) for cell in header_cells]
+
+    # Note: This handles self.show_precision slightly differently, adding it within the same cell
+    # when requested
+    def generate_body_cells(self):
+        return [self.generate_cov_cell_row(cov_name) for cov_name in self.cov_names]
+
+    def generate_cov_cell_row(self, cov_name):
+        cov_print_name = (self.cov_map or {}).get(cov_name, cov_name)
+        row = [cov_print_name]
+        for md in self.model_data:
+            if cov_name in md['cov_names']:
+                content = str(round(md['cov_values'][cov_name], self.sig_digits))
+                if self.show_sig:
+                    content += str(self.get_sig_icon(md['p_values'][cov_name])) 
+                if self.show_precision:
+                    if self.confidence_intervals:
+                        content += "{}({}, {})".format(
+                            self.precision_separator,
+                            round(md['conf_int_low_values'][cov_name], self.sig_digits),
+                            round(md['conf_int_high_values'][cov_name], self.sig_digits)
+                        )
+                    else:
+                        content += "{}({})".format(
+                            self.precision_separator,
+                            round(md['cov_std_err'][cov_name], self.sig_digits)
+                        )
+                row.append(content)
+            else:
+                row.append("")
+        return row
+
+    def generate_footer_cells(self):
+        footer = []
+        if self.show_n:
+            footer.append(self.generate_observations_cells())
+        if self.show_r2:
+            footer.append(self.generate_r2_cells())
+        if self.show_adj_r2:
+            footer.append(self.generate_r2_adj_cells())
+        if self.show_residual_std_err:
+            footer.append(self.generate_resid_std_err_cells())
+        if self.show_f_statistic:
+            footer.append(self.generate_f_statistic_cells())
+        return footer
+
+    def obs_row(self, label, getter):
+        return [label] + [str(getter(md)) for md in self.model_data]
+
+    def generate_observations_cells(self):
+        return self.obs_row("Observations", lambda md: md['degree_freedom'] + md['degree_freedom_resid'] + 1)
+
+    def generate_r2_cells(self):
+        return self.obs_row("r^2", lambda md: round(md['r2'], self.sig_digits))
+
+    def generate_r2_adj_cells(self):
+        return self.obs_row("Adjusted r^2", lambda md: round(md['r2_adj'], self.sig_digits))
+
+    def generate_resid_std_err_cells(self):
+        def rse(md):
+            content = str(round(md['resid_std_err'], self.sig_digits))
+            if self.show_dof:
+                content += "{}(df={})".format(
+                    self.df_separator,
+                    round(md['degree_freedom_resid'])
+                )
+            return content
+        return self.obs_row("Residual Std. Error", rse)
+
+    def generate_f_statistic_cells(self):
+        def fs(md):
+            content = str(round(md['f_statistic'], self.sig_digits))
+            if self.show_dof:
+                content += "{}(df={}; {})".format(
+                    self.df_separator,
+                    md['degree_freedom'],
+                    round(md['degree_freedom_resid'])
+                )
+            return content
+        return self.obs_row("F Statistic", fs)
+
+    def get_column_labels(self):
+        if isinstance(self.column_labels, str):
+            return [self.column_labels] * self.num_models
+        else:
+            try:
+                return [str(label) for label in labels]
+            except TypeError:
+                raise ValueError("Stargazer.column_labels must be a string or a list of values")
+        
     # Begin HTML render functions
     def render_html(self):
         html = ''
@@ -297,7 +430,8 @@ class Stargazer:
 
         return ''
 
-    def get_sig_icon(self, p_value, sig_char='*'):
+    def get_sig_icon(self, p_value, sig_char=None):
+        sig_char = sig_char or self.sig_char
         if p_value >= self.sig_levels[0]:
             return ''
         elif p_value >= self.sig_levels[1]:
