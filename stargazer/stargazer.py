@@ -176,6 +176,11 @@ class Stargazer:
         if self.original_cov_names is not None:
             self.cov_names = self.original_cov_names
 
+    def add_custom_footer_text(self, footer_text):
+        for text in footer_text:
+            assert len(text) == self.num_models + 1, 'Please input iterables of length "number of models + 1"'
+        self.custom_footer_text = footer_text
+
     def show_degrees_of_freedom(self, show):
         assert type(show) == bool, 'Please input True/False'
         self.show_dof = show
@@ -314,6 +319,8 @@ class Stargazer:
 
         if not self.show_footer:
             return footer
+        if self.custom_footer_text:
+            footer += self.generate_custom_footer_html()
         footer += self.generate_observations_html()
         footer += self.generate_r2_html()
         footer += self.generate_r2_adj_html()
@@ -326,6 +333,15 @@ class Stargazer:
         footer += '</table>'
 
         return footer
+
+    def generate_custom_footer_html(self):
+        custom_text = ''
+        for custom_row in self.custom_footer_text:
+            custom_text += '<tr><td style="text-align: left">' + str(custom_row[0]) + '</td>'
+            for custom_column in custom_row[1:]:
+                custom_text += '<td>' + str(custom_column) + '</td>'
+            custom_text += '</tr>'
+        return custom_text
 
     def generate_observations_html(self):
         obs_text = ''
@@ -543,6 +559,8 @@ class Stargazer:
 
         if not self.show_footer:
             return footer
+        if self.custom_footer_text:
+            footer += self.generate_custom_footer_latex()
         footer += self.generate_observations_latex()
         footer += self.generate_r2_latex()
         footer += self.generate_r2_adj_latex()
@@ -558,6 +576,15 @@ class Stargazer:
             footer += '\n\\end{table}'
 
         return footer
+
+    def generate_custom_footer_latex(self):
+        custom_text = ''
+        for custom_row in self.custom_footer_text:
+            custom_text += ' ' + str(custom_row[0]) + ' '
+            for custom_column in custom_row[1:]:
+                custom_text += '& ' + str(custom_column) + ' '
+            custom_text += '\\\\\n'
+        return custom_text
 
     def generate_observations_latex(self):
         obs_text = ''
