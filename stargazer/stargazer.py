@@ -209,8 +209,9 @@ class Stargazer:
 
         header += '<table style="text-align:center"><tr><td colspan="'
         header += str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
-        header += '<tr><td style="text-align:left"></td><td colspan="' + str(self.num_models)
-        header += '"><em>' + self.dep_var_name + '</em></td></tr>'
+        if self.dep_var_name is not None:
+            header += '<tr><td style="text-align:left"></td><td colspan="' + str(self.num_models)
+            header += '"><em>' + self.dep_var_name + '</em></td></tr>'
 
         header += '<tr><td style="text-align:left"></td>'
         if self.column_labels is not None:
@@ -444,9 +445,10 @@ class Stargazer:
         header += '\\begin{tabular}{@{\\extracolsep{5pt}}lcc}\n'
         header += '\\\\[-1.8ex]\\hline\n'
         header += '\\hline \\\\[-1.8ex]\n'
-        header += '& \\multicolumn{' + str(self.num_models) + '}{c}'
-        header += '{\\textit{' + self.dep_var_name + '}} \\\n'
-        header += '\\cr \\cline{' + str(self.num_models) + '-' + str(self.num_models + 1) + '}\n'
+        if self.dep_var_name is not None:
+            header += '& \\multicolumn{' + str(self.num_models) + '}{c}'
+            header += '{\\textit{' + self.dep_var_name + '}} \\\n'
+            header += '\\cr \\cline{' + str(self.num_models) + '-' + str(self.num_models + 1) + '}\n'
 
         if self.column_labels is not None:
             if type(self.column_labels) == str:
