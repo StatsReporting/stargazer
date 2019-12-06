@@ -25,6 +25,8 @@ class Stargazer:
     and then render the results in either HTML or LaTeX.
     """
 
+    CUSTOM_LINES_LOCATIONS = ['body bottom', 'footer top', 'footer bottom']
+
     def __init__(self, models):
         self.models = models
         self.num_models = len(models)
@@ -72,7 +74,7 @@ class Stargazer:
         self.sig_digits = 3
         self.confidence_intervals = False
         self.show_footer = True
-        self.custom_footer_text = []
+        self.custom_lines = {}
         self.show_n = True
         self.show_r2 = True
         self.show_adj_r2 = True
@@ -176,10 +178,13 @@ class Stargazer:
         if self.original_cov_names is not None:
             self.cov_names = self.original_cov_names
 
-    def add_custom_footer_text(self, footer_text):
-        for text in footer_text:
-            assert len(text) == self.num_models + 1, 'Please input iterables of length "number of models + 1"'
-        self.custom_footer_text = footer_text
+    def add_custom_lines(self, lines, location='footer top'):
+        for line in lines:
+            assert len(line) == self.num_models + 1, \
+                'Please input iterables of length "number of models + 1"'
+        assert location in self.CUSTOM_LINES_LOCATIONS,  \
+            'location needs to be one of {}'.format(str(self.CUSTOM_LINES_LOCATIONS))
+        self.custom_lines[location] = lines
 
     def show_degrees_of_freedom(self, show):
         assert type(show) == bool, 'Please input True/False'
@@ -252,6 +257,8 @@ class Stargazer:
         body = ''
         for cov_name in self.cov_names:
             body += self.generate_cov_rows_html(cov_name)
+        if 'body bottom' in self.custom_lines:
+            body += self.generate_custom_lines_html('body bottom')
 
         return body
 
@@ -319,8 +326,8 @@ class Stargazer:
 
         if not self.show_footer:
             return footer
-        if self.custom_footer_text:
-            footer += self.generate_custom_footer_html()
+        if 'footer top' in self.custom_lines:
+            footer += self.generate_custom_lines_html('footer top')
         footer += self.generate_observations_html()
         footer += self.generate_r2_html()
         footer += self.generate_r2_adj_html()
@@ -328,15 +335,17 @@ class Stargazer:
             footer += self.generate_resid_std_err_html()
         if self.show_f_statistic:
             footer += self.generate_f_statistic_html()
+        if 'footer bottom' in self.custom_lines:
+            footer += self.generate_custom_lines_html('footer bottom')
         footer += '<tr><td colspan="' + str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
         footer += self.generate_notes_html()
         footer += '</table>'
 
         return footer
 
-    def generate_custom_footer_html(self):
+    def generate_custom_lines_html(self, location):
         custom_text = ''
-        for custom_row in self.custom_footer_text:
+        for custom_row in self.custom_lines[location]:
             custom_text += '<tr><td style="text-align: left">' + str(custom_row[0]) + '</td>'
             for custom_column in custom_row[1:]:
                 custom_text += '<td>' + str(custom_column) + '</td>'
@@ -498,6 +507,8 @@ class Stargazer:
             for _ in range(self.num_models):
                 body += '& '
             body += '\\\\\n'
+        if 'body bottom' in self.custom_lines:
+            body += self.generate_custom_lines_latex('body bottom')
 
         return body
 
@@ -559,8 +570,8 @@ class Stargazer:
 
         if not self.show_footer:
             return footer
-        if self.custom_footer_text:
-            footer += self.generate_custom_footer_latex()
+        if 'footer top' in self.custom_lines:
+            footer += self.generate_custom_lines_latex('footer top')
         footer += self.generate_observations_latex()
         footer += self.generate_r2_latex()
         footer += self.generate_r2_adj_latex()
@@ -568,6 +579,8 @@ class Stargazer:
             footer += self.generate_resid_std_err_latex()
         if self.show_f_statistic:
             footer += self.generate_f_statistic_latex()
+        if 'footer bottom' in self.custom_lines:
+            footer += self.generate_custom_lines_latex('footer bottom')
         footer += '\\hline\n\\hline \\\\[-1.8ex]\n'
         footer += self.generate_notes_latex()
         footer += '\\end{tabular}'
@@ -577,9 +590,9 @@ class Stargazer:
 
         return footer
 
-    def generate_custom_footer_latex(self):
+    def generate_custom_lines_latex(self, location):
         custom_text = ''
-        for custom_row in self.custom_footer_text:
+        for custom_row in self.custom_lines[location]:
             custom_text += ' ' + str(custom_row[0]) + ' '
             for custom_column in custom_row[1:]:
                 custom_text += '& ' + str(custom_column) + ' '
