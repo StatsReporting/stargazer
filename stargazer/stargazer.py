@@ -28,8 +28,8 @@ class Stargazer:
     def __init__(self, models):
         self.models = models
         self.num_models = len(models)
-        self.extract_data()
         self.reset_params()
+        self.extract_data()
 
     def validate_input(self):
         """
@@ -46,9 +46,10 @@ class Stargazer:
             targets.append(m.model.endog_names)
 
         if targets.count(targets[0]) != len(targets):
-            raise ValueError('Please make sure OLS targets are identical')
-
-        self.dependent_variable = targets[0]
+            self.dependent_variable = ''
+            self.dep_var_name = None
+        else:
+            self.dependent_variable = targets[0]
 
     def reset_params(self):
         """
@@ -213,7 +214,7 @@ class Stargazer:
         header += str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
         if self.dep_var_name is not None:
             header += '<tr><td style="text-align:left"></td><td colspan="' + str(self.num_models)
-            header += '"><em>' + self.dep_var_name + '</em></td></tr>'
+            header += '"><em>' + self.dep_var_name + self.dependent_variable + '</em></td></tr>'
 
         header += '<tr><td style="text-align:left"></td>'
         if self.column_labels is not None:
