@@ -422,10 +422,10 @@ class Stargazer:
         return notes_text
 
     # Begin LaTeX render functions
-    def render_latex(self, only_tabular=False):
+    def render_latex(self, only_tabular=False, insert_empty_rows=False):
         latex = ''
         latex += self.generate_header_latex(only_tabular=only_tabular)
-        latex += self.generate_body_latex()
+        latex += self.generate_body_latex(insert_empty_rows=insert_empty_rows)
         latex += self.generate_footer_latex(only_tabular=only_tabular)
 
         return latex
@@ -470,7 +470,7 @@ class Stargazer:
 
         return header
 
-    def generate_body_latex(self):
+    def generate_body_latex(self, insert_empty_rows=False):
         """
         Generate the body of the results where the
         covariate reporting is.
@@ -478,10 +478,8 @@ class Stargazer:
         body = ''
         for cov_name in self.cov_names:
             body += self.generate_cov_rows_latex(cov_name)
-            body += '  '
-            for _ in range(self.num_models):
-                body += '& '
-            body += '\\\\\n'
+            if insert_empty_rows:
+                body += '  ' + '& '*len(self.num_models) + '\\\\\n'
 
         return body
 
