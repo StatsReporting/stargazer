@@ -349,7 +349,7 @@ class Stargazer:
 
     def generate_r2_adj_html(self):
         r2_text = ''
-        if not self.show_r2:
+        if not self.show_adj_r2:
             return r2_text
         r2_text += '<tr><td style="text-align: left">Adjusted R<sup>2</sup></td>'
         for md in self.model_data:
@@ -581,7 +581,7 @@ class Stargazer:
 
     def generate_r2_adj_latex(self):
         r2_text = ''
-        if not self.show_r2:
+        if not self.show_adj_r2:
             return r2_text
         r2_text += ' Adjusted R${2}$ '
         for md in self.model_data:
