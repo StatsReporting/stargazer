@@ -574,7 +574,7 @@ class Stargazer:
         r2_text = ''
         if not self.show_r2:
             return r2_text
-        r2_text += ' R${2}$ '
+        r2_text += ' $R^2$ '
         for md in self.model_data:
             r2_text += '& ' + str(round(md['r2'], self.sig_digits)) + ' '
         r2_text += '\\\\\n'
@@ -584,7 +584,7 @@ class Stargazer:
         r2_text = ''
         if not self.show_r2:
             return r2_text
-        r2_text += ' Adjusted R${2}$ '
+        r2_text += ' Adjusted $R^2$ '
         for md in self.model_data:
             r2_text += '& ' + str(round(md['r2_adj'], self.sig_digits)) + ' '
         r2_text += '\\\\\n'
