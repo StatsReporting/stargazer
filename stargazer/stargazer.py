@@ -320,23 +320,25 @@ class Stargazer:
 
         if not self.show_footer:
             return footer
-        footer += self.generate_observations_html()
-        footer += self.generate_r2_html()
-        footer += self.generate_r2_adj_html()
+        if self.show_n:
+            footer += self.generate_observations_html()
+        if self.show_r2:
+            footer += self.generate_r2_html()
+        if self.show_adj_r2:
+            footer += self.generate_r2_adj_html()
         if self.show_residual_std_err:
             footer += self.generate_resid_std_err_html()
         if self.show_f_statistic:
             footer += self.generate_f_statistic_html()
         footer += '<tr><td colspan="' + str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
-        footer += self.generate_notes_html()
+        if self.show_notes:
+            footer += self.generate_notes_html()
         footer += '</table>'
 
         return footer
 
     def generate_observations_html(self):
         obs_text = ''
-        if not self.show_n:
-            return obs_text
         obs_text += '<tr><td style="text-align: left">Observations</td>'
         for md in self.model_data:
             obs_text += '<td>{:d}</td>'.format(int(md['degree_freedom'] + md['degree_freedom_resid'] + 1))
@@ -345,8 +347,6 @@ class Stargazer:
 
     def generate_r2_html(self):
         r2_text = ''
-        if not self.show_r2:
-            return r2_text
         r2_text += '<tr><td style="text-align: left">R<sup>2</sup></td>'
         for md in self.model_data:
             r2_text += '<td>' + self._float_format(md['r2']) + '</td>'
@@ -355,8 +355,6 @@ class Stargazer:
 
     def generate_r2_adj_html(self):
         r2_text = ''
-        if not self.show_r2:
-            return r2_text
         r2_text += '<tr><td style="text-align: left">Adjusted R<sup>2</sup></td>'
         for md in self.model_data:
             r2_text += '<td>' + self._float_format(md['r2_adj']) + '</td>'
@@ -365,8 +363,6 @@ class Stargazer:
 
     def generate_resid_std_err_html(self):
         rse_text = ''
-        if not self.show_r2:
-            return rse_text
         rse_text += '<tr><td style="text-align: left">Residual Std. Error</td>'
         for md in self.model_data:
             rse_text += '<td>' + self._float_format(md['resid_std_err'])
@@ -378,8 +374,6 @@ class Stargazer:
 
     def generate_f_statistic_html(self):
         f_text = ''
-        if not self.show_r2:
-            return f_text
         f_text += '<tr><td style="text-align: left">F Statistic</td>'
         for md in self.model_data:
             f_text += '<td>' + self._float_format(md['f_statistic'])
@@ -392,18 +386,11 @@ class Stargazer:
 
     def generate_notes_html(self):
         notes_text = ''
-        if not self.show_notes:
-            return notes_text
-
         notes_text += '<tr><td style="text-align: left">' + self.notes_label + '</td>'
-
         if self.notes_append:
             notes_text += self.generate_p_value_section_html()
-
         notes_text += '</tr>'
-
         notes_text += self.generate_additional_notes_html()
-
         return notes_text
 
     def generate_p_value_section_html(self):
@@ -550,15 +537,19 @@ class Stargazer:
 
         if not self.show_footer:
             return footer
-        footer += self.generate_observations_latex()
-        footer += self.generate_r2_latex()
-        footer += self.generate_r2_adj_latex()
+        if self.show_n:
+            footer += self.generate_observations_latex()
+        if self.show_r2:
+            footer += self.generate_r2_latex()
+        if self.show_adj_r2:
+            footer += self.generate_r2_adj_latex()
         if self.show_residual_std_err:
             footer += self.generate_resid_std_err_latex()
         if self.show_f_statistic:
             footer += self.generate_f_statistic_latex()
         footer += '\\hline\n\\hline \\\\[-1.8ex]\n'
-        footer += self.generate_notes_latex()
+        if self.show_notes:
+            footer += self.generate_notes_latex()
         footer += '\\end{tabular}'
 
         if not only_tabular:
@@ -568,8 +559,6 @@ class Stargazer:
 
     def generate_observations_latex(self):
         obs_text = ''
-        if not self.show_n:
-            return obs_text
         obs_text += ' Observations '
         for md in self.model_data:
             obs_text += '& {:d} '.format(int(md['degree_freedom'] + md['degree_freedom_resid'] + 1))
@@ -578,8 +567,6 @@ class Stargazer:
 
     def generate_r2_latex(self):
         r2_text = ''
-        if not self.show_r2:
-            return r2_text
         r2_text += ' R${2}$ '
         for md in self.model_data:
             r2_text += '& ' + self._float_format(md['r2']) + ' '
@@ -588,8 +575,6 @@ class Stargazer:
 
     def generate_r2_adj_latex(self):
         r2_text = ''
-        if not self.show_r2:
-            return r2_text
         r2_text += ' Adjusted R${2}$ '
         for md in self.model_data:
             r2_text += '& ' + self._float_format(md['r2_adj']) + ' '
@@ -598,8 +583,6 @@ class Stargazer:
 
     def generate_resid_std_err_latex(self):
         rse_text = ''
-        if not self.show_r2:
-            return rse_text
         rse_text += ' Residual Std. Error '
         for md in self.model_data:
             rse_text += '& ' + self._float_format(md['resid_std_err'])
@@ -611,11 +594,7 @@ class Stargazer:
 
     def generate_f_statistic_latex(self):
         f_text = ''
-        if not self.show_r2:
-            return f_text
-
         f_text += ' F Statistic '
-
         for md in self.model_data:
             f_text += '& ' + self._float_format(md['f_statistic'])
             f_text += '$^{' + self.get_sig_icon(md['f_p_value']) + '}$ '
@@ -627,15 +606,10 @@ class Stargazer:
 
     def generate_notes_latex(self):
         notes_text = ''
-        if not self.show_notes:
-            return notes_text
-
         notes_text += '\\textit{' + self.notes_label + '}'
-
         if self.notes_append:
             notes_text += self.generate_p_value_section_latex()
         notes_text += self.generate_additional_notes_latex()
-
         return notes_text
 
     def generate_p_value_section_latex(self):
