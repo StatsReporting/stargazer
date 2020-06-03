@@ -565,16 +565,14 @@ class Stargazer:
         return obs_text
 
     def generate_r2_latex(self):
-        r2_text = ''
-        r2_text += ' $R^2$ '
+        r2_text = ' $R^2$ '
         for md in self.model_data:
             r2_text += '& ' + self._float_format(md['r2']) + ' '
         r2_text += '\\\\\n'
         return r2_text
 
     def generate_r2_adj_latex(self):
-        r2_text = ''
-        r2_text += ' Adjusted $R^2$ '
+        r2_text = ' Adjusted $R^2$ '
         for md in self.model_data:
             r2_text += '& ' + self._float_format(md['r2_adj']) + ' '
         r2_text += '\\\\\n'
