@@ -193,11 +193,16 @@ class Stargazer:
         self.notes_append = append
 
     # Begin HTML render functions
-    def render_html(self):
+    def render_html(self, out=None):
         html = ''
         html += self.generate_header_html()
         html += self.generate_body_html()
         html += self.generate_footer_html()
+
+        if out is not None:
+            with open(out, "w") as f:
+                f.write(html)
+
 
         return html
 
@@ -422,12 +427,15 @@ class Stargazer:
         return notes_text
 
     # Begin LaTeX render functions
-    def render_latex(self, only_tabular=False):
+    def render_latex(self, only_tabular=False, out=None):
         latex = ''
         latex += self.generate_header_latex(only_tabular=only_tabular)
         latex += self.generate_body_latex()
         latex += self.generate_footer_latex(only_tabular=only_tabular)
 
+        if out is not None:
+            with open(out, "w") as f:
+                f.write(latex)
         return latex
 
     def generate_header_latex(self, only_tabular=False):
