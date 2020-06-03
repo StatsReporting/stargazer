@@ -194,6 +194,11 @@ class Stargazer:
 
     # Begin HTML render functions
     def render_html(self, out=None):
+        """ Renders Stargazer object as HTML.
+        
+        Args:
+            out: File to write HTML to (optional).
+        """
         html = ''
         html += self.generate_header_html()
         html += self.generate_body_html()
@@ -428,6 +433,14 @@ class Stargazer:
 
     # Begin LaTeX render functions
     def render_latex(self, only_tabular=False, out=None):
+        """ Renders Stargazer object as LaTeX.
+        
+        Args:
+            only_tabular: Whether the header and footer should be omitted.
+                          Defaults to False.
+            out: File to write tex to (optional).
+        """
+
         latex = ''
         latex += self.generate_header_latex(only_tabular=only_tabular)
         latex += self.generate_body_latex()
