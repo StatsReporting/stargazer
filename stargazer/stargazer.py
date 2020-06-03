@@ -12,7 +12,7 @@ https://CRAN.R-project.org/package=stargazer
 
 from __future__ import print_function
 from statsmodels.regression.linear_model import RegressionResultsWrapper
-from numpy import round, sqrt
+from math import sqrt
 
 
 class Stargazer:
@@ -260,6 +260,12 @@ class Stargazer:
 
         return cov_text
 
+    def _float_format(self, value):
+        """
+        Format value to string, using the precision set by the user.
+        """
+        return '{{:.{prec}f}}'.format(prec=self.sig_digits).format(value)
+
     def generate_cov_main_html(self, cov_name):
         cov_print_name = cov_name
         if self.cov_map is not None:
@@ -268,7 +274,7 @@ class Stargazer:
         for md in self.model_data:
             if cov_name in md['cov_names']:
                 cov_text += '<td>'
-                cov_text += str(round(md['cov_values'][cov_name], self.sig_digits))
+                cov_text += self._float_format(md['cov_values'][cov_name])
                 if self.show_sig:
                     cov_text += '<sup>' + str(self.get_sig_icon(md['p_values'][cov_name])) + '</sup>'
                 cov_text += '</td>'
@@ -284,10 +290,10 @@ class Stargazer:
             if cov_name in md['cov_names']:
                 cov_text += '<td>('
                 if self.confidence_intervals:
-                    cov_text += str(round(md['conf_int_low_values'][cov_name], self.sig_digits)) + ' , '
-                    cov_text += str(round(md['conf_int_high_values'][cov_name], self.sig_digits))
+                    cov_text += self._float_forma(md['conf_int_low_values'][cov_name]) + ' , '
+                    cov_text += self._float_format(md['conf_int_high_values'][cov_name])
                 else:
-                    cov_text += str(round(md['cov_std_err'][cov_name], self.sig_digits))
+                    cov_text += self._float_format(md['cov_std_err'][cov_name])
                 cov_text += ')</td>'
             else:
                 cov_text += '<td></td>'
@@ -333,7 +339,7 @@ class Stargazer:
             return obs_text
         obs_text += '<tr><td style="text-align: left">Observations</td>'
         for md in self.model_data:
-            obs_text += '<td>' + str(md['degree_freedom'] + md['degree_freedom_resid'] + 1) + '</td>'
+            obs_text += '<td>{:d}</td>'.format(int(md['degree_freedom'] + md['degree_freedom_resid'] + 1))
         obs_text += '</tr>'
         return obs_text
 
@@ -343,7 +349,7 @@ class Stargazer:
             return r2_text
         r2_text += '<tr><td style="text-align: left">R<sup>2</sup></td>'
         for md in self.model_data:
-            r2_text += '<td>' + str(round(md['r2'], self.sig_digits)) + '</td>'
+            r2_text += '<td>' + self._float_format(md['r2']) + '</td>'
         r2_text += '</tr>'
         return r2_text
 
@@ -353,7 +359,7 @@ class Stargazer:
             return r2_text
         r2_text += '<tr><td style="text-align: left">Adjusted R<sup>2</sup></td>'
         for md in self.model_data:
-            r2_text += '<td>' + str(round(md['r2_adj'], self.sig_digits)) + '</td>'
+            r2_text += '<td>' + self._float_format(md['r2_adj']) + '</td>'
         r2_text += '</tr>'
         return r2_text
 
@@ -363,9 +369,9 @@ class Stargazer:
             return rse_text
         rse_text += '<tr><td style="text-align: left">Residual Std. Error</td>'
         for md in self.model_data:
-            rse_text += '<td>' + str(round(md['resid_std_err'], self.sig_digits))
+            rse_text += '<td>' + self._float_format(md['resid_std_err'])
             if self.show_dof:
-                rse_text += '(df = ' + str(round(md['degree_freedom_resid'])) + ')'
+                rse_text += ' (df={degree_freedom_resid:.0f})'.format(**md)
             rse_text += '</td>'
         rse_text += '</tr>'
         return rse_text
@@ -376,10 +382,10 @@ class Stargazer:
             return f_text
         f_text += '<tr><td style="text-align: left">F Statistic</td>'
         for md in self.model_data:
-            f_text += '<td>' + str(round(md['f_statistic'], self.sig_digits))
+            f_text += '<td>' + self._float_format(md['f_statistic'])
             f_text += '<sup>' + self.get_sig_icon(md['f_p_value']) + '</sup>'
             if self.show_dof:
-                f_text += '(df = ' + str(md['degree_freedom']) + '; ' + str(md['degree_freedom_resid']) + ')'
+                f_text += ' (df={degree_freedom:.0f}; {degree_freedom_resid:.0f})'.format(**md)
             f_text += '</td>'
         f_text += '</tr>'
         return f_text
@@ -506,7 +512,7 @@ class Stargazer:
         cov_text = ' ' + cov_print_name + ' '
         for md in self.model_data:
             if cov_name in md['cov_names']:
-                cov_text += '& ' + str(round(md['cov_values'][cov_name], self.sig_digits))
+                cov_text += '& ' + self._float_format(md['cov_values'][cov_name])
                 if self.show_sig:
                     cov_text += '$^{' + str(self.get_sig_icon(md['p_values'][cov_name])) + '}$'
                 cov_text += ' '
@@ -523,10 +529,10 @@ class Stargazer:
             if cov_name in md['cov_names']:
                 cov_text += '& ('
                 if self.confidence_intervals:
-                    cov_text += str(round(md['conf_int_low_values'][cov_name], self.sig_digits)) + ' , '
-                    cov_text += str(round(md['conf_int_high_values'][cov_name], self.sig_digits))
+                    cov_text += self._float_format(md['conf_int_low_values'][cov_name]) + ' , '
+                    cov_text += self._float_format(md['conf_int_high_values'][cov_name])
                 else:
-                    cov_text += str(round(md['cov_std_err'][cov_name], self.sig_digits))
+                    cov_text += self._float_format(md['cov_std_err'][cov_name])
                 cov_text += ') '
             else:
                 cov_text += '& '
@@ -566,7 +572,7 @@ class Stargazer:
             return obs_text
         obs_text += ' Observations '
         for md in self.model_data:
-            obs_text += '& ' + str(md['degree_freedom'] + md['degree_freedom_resid'] + 1) + ' '
+            obs_text += '& {:d} '.format(int(md['degree_freedom'] + md['degree_freedom_resid'] + 1))
         obs_text += '\\\\\n'
         return obs_text
 
@@ -576,7 +582,7 @@ class Stargazer:
             return r2_text
         r2_text += ' R${2}$ '
         for md in self.model_data:
-            r2_text += '& ' + str(round(md['r2'], self.sig_digits)) + ' '
+            r2_text += '& ' + self._float_format(md['r2']) + ' '
         r2_text += '\\\\\n'
         return r2_text
 
@@ -586,7 +592,7 @@ class Stargazer:
             return r2_text
         r2_text += ' Adjusted R${2}$ '
         for md in self.model_data:
-            r2_text += '& ' + str(round(md['r2_adj'], self.sig_digits)) + ' '
+            r2_text += '& ' + self._float_format(md['r2_adj']) + ' '
         r2_text += '\\\\\n'
         return r2_text
 
@@ -596,9 +602,9 @@ class Stargazer:
             return rse_text
         rse_text += ' Residual Std. Error '
         for md in self.model_data:
-            rse_text += '& ' + str(round(md['resid_std_err'], self.sig_digits))
+            rse_text += '& ' + self._float_format(md['resid_std_err'])
             if self.show_dof:
-                rse_text += '(df = ' + str(round(md['degree_freedom_resid'])) + ')'
+                rse_text += '(df = {:d})'.format(int(md['degree_freedom_resid']))
             rse_text += ' '
         rse_text += ' \\\\\n'
         return rse_text
@@ -611,7 +617,7 @@ class Stargazer:
         f_text += ' F Statistic '
 
         for md in self.model_data:
-            f_text += '& ' + str(round(md['f_statistic'], self.sig_digits))
+            f_text += '& ' + self._float_format(md['f_statistic'])
             f_text += '$^{' + self.get_sig_icon(md['f_p_value']) + '}$ '
             if self.show_dof:
                 f_text += '(df = ' + str(md['degree_freedom']) + '; ' + str(md['degree_freedom_resid']) + ')'
