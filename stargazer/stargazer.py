@@ -101,26 +101,44 @@ class Stargazer:
             covs = covs + list(md['cov_names'])
         self.cov_names = sorted(set(covs))
 
+    def _extract_feature(self, obj, feature):
+        """
+        Just return obj.feature if present and None otherwise.
+        """
+        try:
+            return getattr(obj, feature)
+        except AttributeError:
+            return None
+
     def extract_model_data(self, model):
+        # For features that are simple attributes of "model", establish the
+        # mapping with internal name (TODO: adopt same names?):
+        statsmodels_map = {'p_values' : 'pvalues',
+                           'cov_values' : 'params',
+                           'cov_std_err' : 'bse',
+                           'r2' : 'rsquared',
+                           'r2_adj' : 'rsquared_adj',
+                           'f_p_value' : 'f_pvalue',
+                           'degree_freedom' : 'df_model',
+                           'degree_freedom_resid' : 'df_resid',
+                           'nobs' : 'nobs',
+                           'f_statistic' : 'fvalue'
+                           }
+
         data = {}
+        for key, val in statsmodels_map.items():
+            data[key] = self._extract_feature(model, val)
+
         data['cov_names'] = model.params.index.values
-        data['cov_values'] = model.params
-        data['p_values'] = model.pvalues
-        data['cov_std_err'] = model.bse
         data['conf_int_low_values'] = model.conf_int()[0]
         data['conf_int_high_values'] = model.conf_int()[1]
-        data['r2'] = model.rsquared
-        data['r2_adj'] = model.rsquared_adj
         data['resid_std_err'] = sqrt(model.scale)
 
         # Workaround for
         # https://github.com/statsmodels/statsmodels/issues/6778:
-        data['f_statistic'] = (lambda x : x[0, 0] if getattr(x, 'ndim', 0)
-                                          else x)(model.fvalue)
-        data['f_p_value'] = model.f_pvalue
-        data['degree_freedom'] = model.df_model
-        data['degree_freedom_resid'] = model.df_resid
-        data['nobs'] = model.nobs
+        if 'f_statistic' in data:
+            data['f_statistic'] = (lambda x : x[0, 0] if getattr(x, 'ndim', 0)
+                                   else x)(data['f_statistic'])
 
         return data
 
@@ -270,6 +288,8 @@ class Stargazer:
         """
         Format value to string, using the precision set by the user.
         """
+        if value is None:
+            return ''
         return '{{:.{prec}f}}'.format(prec=self.sig_digits).format(value)
 
     def generate_cov_main_html(self, cov_name):
@@ -308,6 +328,8 @@ class Stargazer:
         return cov_text
 
     def get_sig_icon(self, p_value, sig_char='*'):
+        if p_value is None:
+            return ''
         if p_value >= self.sig_levels[0]:
             return ''
         elif p_value >= self.sig_levels[1]:
