@@ -316,7 +316,7 @@ class Stargazer:
             if cov_name in md['cov_names']:
                 cov_text += '<td>('
                 if self.confidence_intervals:
-                    cov_text += self._float_forma(md['conf_int_low_values'][cov_name]) + ' , '
+                    cov_text += self._float_format(md['conf_int_low_values'][cov_name]) + ' , '
                     cov_text += self._float_format(md['conf_int_high_values'][cov_name])
                 else:
                     cov_text += self._float_format(md['cov_std_err'][cov_name])
