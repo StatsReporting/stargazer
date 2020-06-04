@@ -116,6 +116,7 @@ class Stargazer:
         data['f_p_value'] = model.f_pvalue
         data['degree_freedom'] = model.df_model
         data['degree_freedom_resid'] = model.df_resid
+        data['nobs'] = model.nobs
 
         return data
 
@@ -342,7 +343,7 @@ class Stargazer:
         obs_text = ''
         obs_text += '<tr><td style="text-align: left">Observations</td>'
         for md in self.model_data:
-            obs_text += '<td>{:d}</td>'.format(int(md['degree_freedom'] + md['degree_freedom_resid'] + 1))
+            obs_text += '<td>{:d}</td>'.format(int(md['nobs']))
         obs_text += '</tr>'
         return obs_text
 
@@ -560,7 +561,7 @@ class Stargazer:
         obs_text = ''
         obs_text += ' Observations '
         for md in self.model_data:
-            obs_text += '& {:d} '.format(int(md['degree_freedom'] + md['degree_freedom_resid'] + 1))
+            obs_text += '& {:d} '.format(int(md['nobs']))
         obs_text += '\\\\\n'
         return obs_text
 
