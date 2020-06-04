@@ -112,7 +112,11 @@ class Stargazer:
         data['r2'] = model.rsquared
         data['r2_adj'] = model.rsquared_adj
         data['resid_std_err'] = sqrt(model.scale)
-        data['f_statistic'] = model.fvalue
+
+        # Workaround for
+        # https://github.com/statsmodels/statsmodels/issues/6778:
+        data['f_statistic'] = (lambda x : x[0, 0] if getattr(x, 'ndim', 0)
+                                          else x)(model.fvalue)
         data['f_p_value'] = model.f_pvalue
         data['degree_freedom'] = model.df_model
         data['degree_freedom_resid'] = model.df_resid
