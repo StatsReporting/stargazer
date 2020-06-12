@@ -437,7 +437,7 @@ class Stargazer:
             header += '  \\label{}\n'
 
         content_columns = 'c' * self.num_models
-        header += '\\begin{tabular}{@{\\extracolsep{5pt}}l' + content_columns + '}\n'
+        header += '\\begin{tabular}{ll' + content_columns + '}\n'
         header += '\\\\[-1.8ex]\\hline\n'
         header += '\\hline \\\\[-1.8ex]\n'
         if self.dep_var_name is not None:
