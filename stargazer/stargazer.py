@@ -84,6 +84,7 @@ class Stargazer:
         self.notes_label = 'Note:'
         self.notes_append = True
         self.custom_notes = []
+        self.table_label = None
 
     def extract_data(self):
         """
@@ -215,6 +216,10 @@ class Stargazer:
     def append_notes(self, append):
         assert type(append) == bool, 'Please input True/False'
         self.notes_append = append
+
+    def table_label(self, table_label):
+        assert type(table_label) == str, 'Please input a string to use as the table label'
+        self.table_label = table_label
 
     # Begin HTML render functions
     def render_html(self):
@@ -461,7 +466,8 @@ class Stargazer:
             if self.title_text is not None:
                 header += '  \\caption{' + self.title_text + '}\n'
 
-            header += '  \\label{}\n'
+            if self.table_label is not None:
+                header += '  \\label{' + self.table_label + '}\n'
 
         content_columns = 'c' * self.num_models
         header += '\\begin{tabular}{@{\\extracolsep{5pt}}l' + content_columns + '}\n'
