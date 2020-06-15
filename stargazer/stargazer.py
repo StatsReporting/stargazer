@@ -84,6 +84,7 @@ class Stargazer:
         self.notes_label = 'Note:'
         self.notes_append = True
         self.custom_notes = []
+        self.show_stars = True
 
     def extract_data(self):
         """
@@ -216,6 +217,10 @@ class Stargazer:
         assert type(append) == bool, 'Please input True/False'
         self.notes_append = append
 
+    def show_stars(self, show):
+        assert type(show) == bool, 'Please input True/False'
+        self.show_stars = show
+
     # Begin HTML render functions
     def render_html(self):
         html = ''
@@ -328,7 +333,7 @@ class Stargazer:
         return cov_text
 
     def get_sig_icon(self, p_value, sig_char='*'):
-        if p_value is None:
+        if p_value is None or not self.show_stars:
             return ''
         if p_value >= self.sig_levels[0]:
             return ''
@@ -415,7 +420,7 @@ class Stargazer:
     def generate_notes_html(self):
         notes_text = ''
         notes_text += '<tr><td style="text-align: left">' + self.notes_label + '</td>'
-        if self.notes_append:
+        if self.notes_append and self.show_stars:
             notes_text += self.generate_p_value_section_html()
         notes_text += '</tr>'
         notes_text += self.generate_additional_notes_html()
@@ -631,7 +636,7 @@ class Stargazer:
     def generate_notes_latex(self):
         notes_text = ''
         notes_text += '\\textit{' + self.notes_label + '}'
-        if self.notes_append:
+        if self.notes_append and self.show_stars:
             notes_text += self.generate_p_value_section_latex()
         notes_text += self.generate_additional_notes_latex()
         return notes_text
