@@ -33,6 +33,7 @@ This library implements many of the customization features found in the original
 * `custom_note_label`: label notes section at bottom of table
 * `add_custom_notes`: add custom notes to section at bottom of the table
 * `append_notes`: display or hide statistical significance thresholds
+* `table_label`: label for LaTeX table
 
 These features are agnostic of the rendering type and will be applied whether the user outputs in HTML, LaTeX, etc
 
