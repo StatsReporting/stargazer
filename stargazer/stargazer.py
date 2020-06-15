@@ -10,7 +10,6 @@ https://CRAN.R-project.org/package=stargazer
         github.com/mwburke
 """
 
-from __future__ import print_function
 from statsmodels.regression.linear_model import RegressionResultsWrapper
 from math import sqrt
 
@@ -658,11 +657,3 @@ class Stargazer:
 
     def _repr_html_(self):
         return self.render_html()
-
-    # Begin Markdown render functions
-    # def render_markdown(self):
-    #     print("sorry haven't made this yet :/")
-
-    # Begin ASCII render functions
-    # def render_ascii(self):
-    #     print("sorry haven't made this yet :/")
