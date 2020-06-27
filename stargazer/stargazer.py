@@ -218,7 +218,27 @@ class Stargazer:
     def append_notes(self, append):
         assert type(append) == bool, 'Please input True/False'
         self.notes_append = append
+        
+    def hide_n(self, hide=True):
+        assert type(hide) == bool, 'Please input True/False'
+        self.show_n = not hide
 
+    def hide_r2(self, hide=True):
+        assert type(hide) == bool, 'Please input True/False'
+        self.show_r2 = not hide
+
+    def hide_adj_r2(self, hide=True):
+        assert type(hide) == bool, 'Please input True/False'
+        self.show_adj_r2 = not hide
+
+    def hide_residual_std_err(self, hide=True):
+        assert type(hide) == bool, 'Please input True/False'
+        self.show_residual_std_err = not hide
+
+    def hide_f_statistic(self, hide=True):
+        assert type(hide) == bool, 'Please input True/False'
+        self.show_f_statistic = not hide
+        
     # Begin HTML render functions
     def render_html(self):
         html = ''
