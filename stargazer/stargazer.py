@@ -217,10 +217,6 @@ class Stargazer:
         assert type(append) == bool, 'Please input True/False'
         self.notes_append = append
 
-    def table_label(self, table_label):
-        assert type(table_label) == str, 'Please input a string to use as the table label'
-        self.table_label = table_label
-
     # Begin HTML render functions
     def render_html(self):
         html = ''
