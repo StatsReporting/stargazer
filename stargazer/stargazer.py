@@ -216,16 +216,77 @@ class Stargazer:
         assert type(append) == bool, 'Please input True/False'
         self.notes_append = append
 
-    # Begin HTML render functions
-    def render_html(self):
-        html = ''
-        html += self.generate_header_html()
-        html += self.generate_body_html()
-        html += self.generate_footer_html()
+    def render_html(self, *args, **kwargs):
+        return HTMLRenderer(self).render(*args, **kwargs)
+
+    def _repr_html_(self):
+        return self.render_html()
+
+    def render_latex(self, *args, **kwargs):
+        return LaTeXRenderer(self).render(*args, **kwargs)
+
+
+class Renderer:
+    """
+    Base class for renderers to specific formats. Only meant to be subclassed.
+    """
+    def __init__(self, table):
+        """
+        Initialize a new renderer.
+        
+        "table": Stargazer object to render
+        """
+
+        self.table = table
+
+    def __getattribute__(self, key):
+        """
+        Temporary fix while we better organize how a Stargazer table stores
+        parameters: just retrieve them transparently as attributes of the
+        Stargazer table object.
+        """
+
+        try:
+            return object.__getattribute__(self, key)
+        except AttributeError as exc:
+            if hasattr(self.table, key):
+                return getattr(self.table, key)
+            else:
+                raise exc
+
+    def get_sig_icon(self, p_value, sig_char='*'):
+        if p_value is None:
+            return ''
+        if p_value >= self.sig_levels[0]:
+            return ''
+        elif p_value >= self.sig_levels[1]:
+            return sig_char
+        elif p_value >= self.sig_levels[2]:
+            return sig_char * 2
+        else:
+            return sig_char * 3
+
+    def _float_format(self, value):
+        """
+        Format value to string, using the precision set by the user.
+        """
+        if value is None:
+            return ''
+
+        return '{{:.{prec}f}}'.format(prec=self.sig_digits).format(value)
+
+
+class HTMLRenderer(Renderer):
+    fmt = 'html'
+
+    def render(self):
+        html = self.generate_header()
+        html += self.generate_body()
+        html += self.generate_footer()
 
         return html
 
-    def generate_header_html(self):
+    def generate_header(self):
         header = ''
         if not self.show_header:
             return header
@@ -263,36 +324,28 @@ class Stargazer:
 
         return header
 
-    def generate_body_html(self):
+    def generate_body(self):
         """
         Generate the body of the results where the
         covariate reporting is.
         """
         body = ''
         for cov_name in self.cov_names:
-            body += self.generate_cov_rows_html(cov_name)
+            body += self.generate_cov_rows(cov_name)
 
         return body
 
-    def generate_cov_rows_html(self, cov_name):
+    def generate_cov_rows(self, cov_name):
         cov_text = ''
-        cov_text += self.generate_cov_main_html(cov_name)
+        cov_text += self.generate_cov_main(cov_name)
         if self.show_precision:
-            cov_text += self.generate_cov_precision_html(cov_name)
+            cov_text += self.generate_cov_precision(cov_name)
         else:
             cov_text += '<tr></tr>'
 
         return cov_text
 
-    def _float_format(self, value):
-        """
-        Format value to string, using the precision set by the user.
-        """
-        if value is None:
-            return ''
-        return '{{:.{prec}f}}'.format(prec=self.sig_digits).format(value)
-
-    def generate_cov_main_html(self, cov_name):
+    def generate_cov_main(self, cov_name):
         cov_print_name = cov_name
         if self.cov_map is not None:
             cov_print_name = self.cov_map.get(cov_print_name, cov_name)
@@ -310,7 +363,7 @@ class Stargazer:
 
         return cov_text
 
-    def generate_cov_precision_html(self, cov_name):
+    def generate_cov_precision(self, cov_name):
         cov_text = '<tr><td style="text-align:left"></td>'
         for md in self.model_data:
             if cov_name in md['cov_names']:
@@ -327,19 +380,7 @@ class Stargazer:
 
         return cov_text
 
-    def get_sig_icon(self, p_value, sig_char='*'):
-        if p_value is None:
-            return ''
-        if p_value >= self.sig_levels[0]:
-            return ''
-        elif p_value >= self.sig_levels[1]:
-            return sig_char
-        elif p_value >= self.sig_levels[2]:
-            return sig_char * 2
-        else:
-            return sig_char * 3
-
-    def generate_footer_html(self):
+    def generate_footer(self):
         """
         Generate the footer of the table where
         model summary section is.
@@ -349,23 +390,23 @@ class Stargazer:
         if not self.show_footer:
             return footer
         if self.show_n:
-            footer += self.generate_observations_html()
+            footer += self.generate_observations()
         if self.show_r2:
-            footer += self.generate_r2_html()
+            footer += self.generate_r2()
         if self.show_adj_r2:
-            footer += self.generate_r2_adj_html()
+            footer += self.generate_r2_adj()
         if self.show_residual_std_err:
-            footer += self.generate_resid_std_err_html()
+            footer += self.generate_resid_std_err()
         if self.show_f_statistic:
-            footer += self.generate_f_statistic_html()
+            footer += self.generate_f_statistic()
         footer += '<tr><td colspan="' + str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
         if self.show_notes:
-            footer += self.generate_notes_html()
+            footer += self.generate_notes()
         footer += '</table>'
 
         return footer
 
-    def generate_observations_html(self):
+    def generate_observations(self):
         obs_text = ''
         obs_text += '<tr><td style="text-align: left">Observations</td>'
         for md in self.model_data:
@@ -373,7 +414,7 @@ class Stargazer:
         obs_text += '</tr>'
         return obs_text
 
-    def generate_r2_html(self):
+    def generate_r2(self):
         r2_text = ''
         r2_text += '<tr><td style="text-align: left">R<sup>2</sup></td>'
         for md in self.model_data:
@@ -381,7 +422,7 @@ class Stargazer:
         r2_text += '</tr>'
         return r2_text
 
-    def generate_r2_adj_html(self):
+    def generate_r2_adj(self):
         r2_text = ''
         r2_text += '<tr><td style="text-align: left">Adjusted R<sup>2</sup></td>'
         for md in self.model_data:
@@ -389,7 +430,7 @@ class Stargazer:
         r2_text += '</tr>'
         return r2_text
 
-    def generate_resid_std_err_html(self):
+    def generate_resid_std_err(self):
         rse_text = ''
         rse_text += '<tr><td style="text-align: left">Residual Std. Error</td>'
         for md in self.model_data:
@@ -400,7 +441,7 @@ class Stargazer:
         rse_text += '</tr>'
         return rse_text
 
-    def generate_f_statistic_html(self):
+    def generate_f_statistic(self):
         f_text = ''
         f_text += '<tr><td style="text-align: left">F Statistic</td>'
         for md in self.model_data:
@@ -412,16 +453,16 @@ class Stargazer:
         f_text += '</tr>'
         return f_text
 
-    def generate_notes_html(self):
+    def generate_notes(self):
         notes_text = ''
         notes_text += '<tr><td style="text-align: left">' + self.notes_label + '</td>'
         if self.notes_append:
-            notes_text += self.generate_p_value_section_html()
+            notes_text += self.generate_p_value_section()
         notes_text += '</tr>'
-        notes_text += self.generate_additional_notes_html()
+        notes_text += self.generate_additional_notes()
         return notes_text
 
-    def generate_p_value_section_html(self):
+    def generate_p_value_section(self):
         notes_text = """
  <td colspan="{}" style="text-align: right">
   <sup>*</sup>p&lt;{};
@@ -430,7 +471,7 @@ class Stargazer:
  </td>""".format(self.num_models, *self.sig_levels)
         return notes_text
 
-    def generate_additional_notes_html(self):
+    def generate_additional_notes(self):
         notes_text = ''
         if len(self.custom_notes) == 0:
             return notes_text
@@ -442,16 +483,17 @@ class Stargazer:
 
         return notes_text
 
-    # Begin LaTeX render functions
-    def render_latex(self, only_tabular=False, insert_empty_rows=False):
-        latex = ''
-        latex += self.generate_header_latex(only_tabular=only_tabular)
-        latex += self.generate_body_latex(insert_empty_rows=insert_empty_rows)
-        latex += self.generate_footer_latex(only_tabular=only_tabular)
+class LaTeXRenderer(Renderer):
+    fmt = 'LaTeX'
+
+    def render(self, only_tabular=False, insert_empty_rows=False):
+        latex = self.generate_header(only_tabular=only_tabular)
+        latex += self.generate_body(insert_empty_rows=insert_empty_rows)
+        latex += self.generate_footer(only_tabular=only_tabular)
 
         return latex
 
-    def generate_header_latex(self, only_tabular=False):
+    def generate_header(self, only_tabular=False):
         header = ''
         if not only_tabular:
             header += '\\begin{table}[!htbp] \\centering\n'
@@ -492,30 +534,30 @@ class Stargazer:
 
         return header
 
-    def generate_body_latex(self, insert_empty_rows=False):
+    def generate_body(self, insert_empty_rows=False):
         """
         Generate the body of the results where the
         covariate reporting is.
         """
         body = ''
         for cov_name in self.cov_names:
-            body += self.generate_cov_rows_latex(cov_name)
+            body += self.generate_cov_rows(cov_name)
             if insert_empty_rows:
                 body += '  ' + '& '*len(self.num_models) + '\\\\\n'
 
         return body
 
-    def generate_cov_rows_latex(self, cov_name):
+    def generate_cov_rows(self, cov_name):
         cov_text = ''
-        cov_text += self.generate_cov_main_latex(cov_name)
+        cov_text += self.generate_cov_main(cov_name)
         if self.show_precision:
-            cov_text += self.generate_cov_precision_latex(cov_name)
+            cov_text += self.generate_cov_precision(cov_name)
         else:
             cov_text += '& '
 
         return cov_text
 
-    def generate_cov_main_latex(self, cov_name):
+    def generate_cov_main(self, cov_name):
         cov_print_name = cov_name
 
         if self.cov_map is not None:
@@ -535,7 +577,7 @@ class Stargazer:
 
         return cov_text
 
-    def generate_cov_precision_latex(self, cov_name):
+    def generate_cov_precision(self, cov_name):
         cov_text = '  '
 
         for md in self.model_data:
@@ -553,7 +595,7 @@ class Stargazer:
 
         return cov_text
 
-    def generate_footer_latex(self, only_tabular=False):
+    def generate_footer(self, only_tabular=False):
         """
         Generate the footer of the table where
         model summary section is.
@@ -564,18 +606,18 @@ class Stargazer:
         if not self.show_footer:
             return footer
         if self.show_n:
-            footer += self.generate_observations_latex()
+            footer += self.generate_observations()
         if self.show_r2:
-            footer += self.generate_r2_latex()
+            footer += self.generate_r2()
         if self.show_adj_r2:
-            footer += self.generate_r2_adj_latex()
+            footer += self.generate_r2_adj()
         if self.show_residual_std_err:
-            footer += self.generate_resid_std_err_latex()
+            footer += self.generate_resid_std_err()
         if self.show_f_statistic:
-            footer += self.generate_f_statistic_latex()
+            footer += self.generate_f_statistic()
         footer += '\\hline\n\\hline \\\\[-1.8ex]\n'
         if self.show_notes:
-            footer += self.generate_notes_latex()
+            footer += self.generate_notes()
         footer += '\\end{tabular}'
 
         if not only_tabular:
@@ -583,7 +625,7 @@ class Stargazer:
 
         return footer
 
-    def generate_observations_latex(self):
+    def generate_observations(self):
         obs_text = ''
         obs_text += ' Observations '
         for md in self.model_data:
@@ -591,21 +633,21 @@ class Stargazer:
         obs_text += '\\\\\n'
         return obs_text
 
-    def generate_r2_latex(self):
+    def generate_r2(self):
         r2_text = ' $R^2$ '
         for md in self.model_data:
             r2_text += '& ' + self._float_format(md['r2']) + ' '
         r2_text += '\\\\\n'
         return r2_text
 
-    def generate_r2_adj_latex(self):
+    def generate_r2_adj(self):
         r2_text = ' Adjusted $R^2$ '
         for md in self.model_data:
             r2_text += '& ' + self._float_format(md['r2_adj']) + ' '
         r2_text += '\\\\\n'
         return r2_text
 
-    def generate_resid_std_err_latex(self):
+    def generate_resid_std_err(self):
         rse_text = ''
         rse_text += ' Residual Std. Error '
         for md in self.model_data:
@@ -616,7 +658,7 @@ class Stargazer:
         rse_text += ' \\\\\n'
         return rse_text
 
-    def generate_f_statistic_latex(self):
+    def generate_f_statistic(self):
         f_text = ''
         f_text += ' F Statistic '
         for md in self.model_data:
@@ -628,22 +670,22 @@ class Stargazer:
         f_text += '\\\\\n'
         return f_text
 
-    def generate_notes_latex(self):
+    def generate_notes(self):
         notes_text = ''
         notes_text += '\\textit{' + self.notes_label + '}'
         if self.notes_append:
-            notes_text += self.generate_p_value_section_latex()
-        notes_text += self.generate_additional_notes_latex()
+            notes_text += self.generate_p_value_section()
+        notes_text += self.generate_additional_notes()
         return notes_text
 
-    def generate_p_value_section_latex(self):
+    def generate_p_value_section(self):
         notes_text = ''
         notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}{$^{' + self.get_sig_icon(self.sig_levels[0] - 0.001) + '}$p$<$' + str(self.sig_levels[0]) + '; '
         notes_text += '$^{' + self.get_sig_icon(self.sig_levels[1] - 0.001) + '}$p$<$' + str(self.sig_levels[1]) + '; '
         notes_text += '$^{' + self.get_sig_icon(self.sig_levels[2] - 0.001) + '}$p$<$' + str(self.sig_levels[2]) + '} \\\\\n'
         return notes_text
 
-    def generate_additional_notes_latex(self):
+    def generate_additional_notes(self):
         notes_text = ''
         # if len(self.custom_notes) == 0:
         #     return notes_text
@@ -656,8 +698,6 @@ class Stargazer:
 
         return notes_text
 
-    def _repr_html_(self):
-        return self.render_html()
 
     # Begin Markdown render functions
     # def render_markdown(self):
