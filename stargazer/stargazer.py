@@ -256,7 +256,7 @@ class Renderer:
                 raise exc
 
     def get_sig_icon(self, p_value, sig_char='*'):
-        if p_value is None:
+        if p_value is None or not self.show_stars:
             return ''
         if p_value >= self.sig_levels[0]:
             return ''
