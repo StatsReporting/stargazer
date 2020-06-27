@@ -280,8 +280,7 @@ class HTMLRenderer(Renderer):
     fmt = 'html'
 
     def render(self):
-        html = ''
-        html += self.generate_header()
+        html = self.generate_header()
         html += self.generate_body()
         html += self.generate_footer()
 
@@ -488,8 +487,7 @@ class LaTeXRenderer(Renderer):
     fmt = 'LaTeX'
 
     def render(self, only_tabular=False, insert_empty_rows=False):
-        latex = ''
-        latex += self.generate_header(only_tabular=only_tabular)
+        latex = self.generate_header(only_tabular=only_tabular)
         latex += self.generate_body(insert_empty_rows=insert_empty_rows)
         latex += self.generate_footer(only_tabular=only_tabular)
 
