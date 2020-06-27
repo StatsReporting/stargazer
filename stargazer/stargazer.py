@@ -13,10 +13,7 @@ https://CRAN.R-project.org/package=stargazer
 from __future__ import print_function
 from statsmodels.regression.linear_model import RegressionResultsWrapper
 from math import sqrt
-import locale
 
-# For formatting numbers with a locale-aware thousands separator.
-locale.setlocale(locale.LC_ALL, '')
 
 class Stargazer:
     """
@@ -372,7 +369,7 @@ class Stargazer:
         obs_text = ''
         obs_text += '<tr><td style="text-align: left">Observations</td>'
         for md in self.model_data:
-            obs_text += '<td>{:n}</td>'.format(int(md['nobs']))
+            obs_text += '<td>{:,}</td>'.format(int(md['nobs']))
         obs_text += '</tr>'
         return obs_text
 
@@ -590,7 +587,7 @@ class Stargazer:
         obs_text = ''
         obs_text += ' Observations '
         for md in self.model_data:
-            obs_text += '& {:n} '.format(int(md['nobs']))
+            obs_text += '& {:,} '.format(int(md['nobs']))
         obs_text += '\\\\\n'
         return obs_text
 
