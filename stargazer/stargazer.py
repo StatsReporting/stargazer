@@ -85,6 +85,7 @@ class Stargazer:
         self.notes_append = True
         self.custom_notes = []
         self.show_stars = True
+        self.table_label = None
 
     def extract_data(self):
         """
@@ -410,7 +411,7 @@ class HTMLRenderer(Renderer):
         obs_text = ''
         obs_text += '<tr><td style="text-align: left">Observations</td>'
         for md in self.model_data:
-            obs_text += '<td>{:d}</td>'.format(int(md['nobs']))
+            obs_text += '<td>{:,}</td>'.format(int(md['nobs']))
         obs_text += '</tr>'
         return obs_text
 
@@ -503,7 +504,8 @@ class LaTeXRenderer(Renderer):
             if self.title_text is not None:
                 header += '  \\caption{' + self.title_text + '}\n'
 
-            header += '  \\label{}\n'
+            if self.table_label is not None:
+                header += '  \\label{' + self.table_label + '}\n'
 
         content_columns = 'c' * self.num_models
         header += '\\begin{tabular}{@{\\extracolsep{5pt}}l' + content_columns + '}\n'
@@ -629,7 +631,7 @@ class LaTeXRenderer(Renderer):
         obs_text = ''
         obs_text += ' Observations '
         for md in self.model_data:
-            obs_text += '& {:d} '.format(int(md['nobs']))
+            obs_text += '& {:,} '.format(int(md['nobs']))
         obs_text += '\\\\\n'
         return obs_text
 
