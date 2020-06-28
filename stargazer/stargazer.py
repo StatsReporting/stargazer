@@ -13,6 +13,15 @@ https://CRAN.R-project.org/package=stargazer
 from __future__ import print_function
 from statsmodels.regression.linear_model import RegressionResultsWrapper
 from math import sqrt
+from collections import defaultdict
+from enum import Enum
+
+
+class LineLocation(Enum):
+    BODY_TOP = 'bt'
+    BODY_BOTTOM = 'bb'
+    FOOTER_TOP = 'ft'
+    FOOTER_BOOTM = 'fb'
 
 
 class Stargazer:
@@ -24,8 +33,6 @@ class Stargazer:
     chaining different methods to the Stargazer object
     and then render the results in either HTML or LaTeX.
     """
-
-    CUSTOM_LINES_LOCATIONS = ['body bottom', 'footer top', 'footer bottom']
 
     def __init__(self, models):
         self.models = models
@@ -75,7 +82,7 @@ class Stargazer:
         self.sig_digits = 3
         self.confidence_intervals = False
         self.show_footer = True
-        self.custom_lines = {}
+        self.custom_lines = defaultdict(list)
         self.show_n = True
         self.show_r2 = True
         self.show_adj_r2 = True
@@ -202,13 +209,27 @@ class Stargazer:
         if self.original_cov_names is not None:
             self.cov_names = self.original_cov_names
 
-    def add_custom_lines(self, lines, location='footer top'):
-        for line in lines:
-            assert len(line) == self.num_models + 1, \
-                'Please input iterables of length "number of models + 1"'
-        assert location in self.CUSTOM_LINES_LOCATIONS,  \
-            'location needs to be one of {}'.format(str(self.CUSTOM_LINES_LOCATIONS))
-        self.custom_lines[location] = lines
+    def add_line(self, label, values, location=LineLocation.BODY_BOTTOM):
+        """
+        Add a custom line to the table.
+
+        At each location, lines are added in the order at which this method is called.
+        To remove lines, modify the custom_lines[location] attribute.
+
+        Parameters
+        ----------
+        label : str
+            Name of the new line (left-most column).
+        values : list of str
+            List containing the custom information (one entry per model).
+        location : LineLocation or str
+            Location at which to add the line.
+        """
+        assert len(values) == self.num_models, \
+            'values has to be an iterables with {} elements (one for each model)'.format(self.num_models)
+        if type(location) != LineLocation:
+            location = LineLocation(location)
+        self.custom_lines[location].append([label] + values)
 
     def show_degrees_of_freedom(self, show):
         assert type(show) == bool, 'Please input True/False'
@@ -340,10 +361,10 @@ class HTMLRenderer(Renderer):
         covariate reporting is.
         """
         body = ''
+        body += self.generate_custom_lines(LineLocation.BODY_TOP)
         for cov_name in self.cov_names:
             body += self.generate_cov_rows(cov_name)
-        if 'body bottom' in self.custom_lines:
-            body += self.generate_custom_lines_html('body bottom')
+        body += self.generate_custom_lines(LineLocation.BODY_BOTTOM)
 
         return body
 
@@ -401,8 +422,7 @@ class HTMLRenderer(Renderer):
 
         if not self.show_footer:
             return footer
-        if 'footer top' in self.custom_lines:
-            footer += self.generate_custom_lines_html('footer top')
+        footer += self.generate_custom_lines(LineLocation.FOOTER_TOP)
         if self.show_n:
             footer += self.generate_observations()
         if self.show_r2:
@@ -413,8 +433,7 @@ class HTMLRenderer(Renderer):
             footer += self.generate_resid_std_err()
         if self.show_f_statistic:
             footer += self.generate_f_statistic()
-        if 'footer bottom' in self.custom_lines:
-            footer += self.generate_custom_lines_html('footer bottom')
+        footer += self.generate_custom_lines(LineLocation.FOOTER_BOOTM)
         footer += '<tr><td colspan="' + str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
         if self.show_notes:
             footer += self.generate_notes()
@@ -422,7 +441,7 @@ class HTMLRenderer(Renderer):
 
         return footer
 
-    def generate_custom_lines_html(self, location):
+    def generate_custom_lines(self, location):
         custom_text = ''
         for custom_row in self.custom_lines[location]:
             custom_text += '<tr><td style="text-align: left">' + str(custom_row[0]) + '</td>'
@@ -565,12 +584,12 @@ class LaTeXRenderer(Renderer):
         covariate reporting is.
         """
         body = ''
+        body += self.generate_custom_lines(LineLocation.BODY_TOP)
         for cov_name in self.cov_names:
             body += self.generate_cov_rows(cov_name)
             if insert_empty_rows:
                 body += '  ' + '& '*len(self.num_models) + '\\\\\n'
-        if 'body bottom' in self.custom_lines:
-            body += self.generate_custom_lines_latex('body bottom')
+        body += self.generate_custom_lines(LineLocation.BODY_BOTTOM)
 
         return body
 
@@ -632,8 +651,7 @@ class LaTeXRenderer(Renderer):
 
         if not self.show_footer:
             return footer
-        if 'footer top' in self.custom_lines:
-            footer += self.generate_custom_lines_latex('footer top')
+        footer += self.generate_custom_lines(LineLocation.FOOTER_TOP)
         if self.show_n:
             footer += self.generate_observations()
         if self.show_r2:
@@ -644,8 +662,7 @@ class LaTeXRenderer(Renderer):
             footer += self.generate_resid_std_err()
         if self.show_f_statistic:
             footer += self.generate_f_statistic()
-        if 'footer bottom' in self.custom_lines:
-            footer += self.generate_custom_lines_latex('footer bottom')
+        footer += self.generate_custom_lines(LineLocation.FOOTER_BOOTM)
         footer += '\\hline\n\\hline \\\\[-1.8ex]\n'
         if self.show_notes:
             footer += self.generate_notes()
@@ -656,7 +673,7 @@ class LaTeXRenderer(Renderer):
 
         return footer
 
-    def generate_custom_lines_latex(self, location):
+    def generate_custom_lines(self, location):
         custom_text = ''
         for custom_row in self.custom_lines[location]:
             custom_text += ' ' + str(custom_row[0]) + ' '
