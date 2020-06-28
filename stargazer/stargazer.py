@@ -503,11 +503,13 @@ class LaTeXRenderer(Renderer):
     @staticmethod
     def _escape(text):
         """Escape LaTeX special characters"""
-        for orig_char, escape_char in LaTeXRenderer._ESCAPE_CHARS:
-            text = text.replace(orig_char, escape_char)
+        if self.escape:
+            for orig_char, escape_char in LaTeXRenderer._ESCAPE_CHARS:
+                text = text.replace(orig_char, escape_char)
         return text
 
-    def render(self, only_tabular=False, insert_empty_rows=False):
+    def render(self, only_tabular=False, insert_empty_rows=False, escape=False):
+        self.escape = escape
         latex = self.generate_header(only_tabular=only_tabular)
         latex += self.generate_body(insert_empty_rows=insert_empty_rows)
         latex += self.generate_footer(only_tabular=only_tabular)
