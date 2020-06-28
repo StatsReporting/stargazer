@@ -410,7 +410,7 @@ class HTMLRenderer(Renderer):
         obs_text = ''
         obs_text += '<tr><td style="text-align: left">Observations</td>'
         for md in self.model_data:
-            obs_text += '<td>{:d}</td>'.format(int(md['nobs']))
+            obs_text += '<td>{:,}</td>'.format(int(md['nobs']))
         obs_text += '</tr>'
         return obs_text
 
@@ -629,7 +629,7 @@ class LaTeXRenderer(Renderer):
         obs_text = ''
         obs_text += ' Observations '
         for md in self.model_data:
-            obs_text += '& {:d} '.format(int(md['nobs']))
+            obs_text += '& {:,} '.format(int(md['nobs']))
         obs_text += '\\\\\n'
         return obs_text
 
