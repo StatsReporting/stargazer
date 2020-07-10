@@ -10,7 +10,6 @@ https://CRAN.R-project.org/package=stargazer
         github.com/mwburke
 """
 
-from __future__ import print_function
 from statsmodels.regression.linear_model import RegressionResultsWrapper
 from math import sqrt
 
@@ -699,12 +698,3 @@ class LaTeXRenderer(Renderer):
             notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + note + '} \\\\\n'
 
         return notes_text
-
-
-    # Begin Markdown render functions
-    # def render_markdown(self):
-    #     print("sorry haven't made this yet :/")
-
-    # Begin ASCII render functions
-    # def render_ascii(self):
-    #     print("sorry haven't made this yet :/")
