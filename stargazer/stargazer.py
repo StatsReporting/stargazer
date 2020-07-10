@@ -221,9 +221,9 @@ class Stargazer:
         label : str
             Name of the new line (left-most column).
         values : list of str
-            List containing the custom information (one entry per model).
+            List containing the custom content (one item per model).
         location : LineLocation or str
-            Location at which to add the line.
+            Location at which to add the line. See list(LineLocation) for valid values.
         """
         assert len(values) == self.num_models, \
             'values has to be an iterables with {} elements (one for each model)'.format(self.num_models)
