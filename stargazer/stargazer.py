@@ -12,6 +12,15 @@ https://CRAN.R-project.org/package=stargazer
 
 from statsmodels.regression.linear_model import RegressionResultsWrapper
 from math import sqrt
+from collections import defaultdict
+from enum import Enum
+
+
+class LineLocation(Enum):
+    BODY_TOP = 'bt'
+    BODY_BOTTOM = 'bb'
+    FOOTER_TOP = 'ft'
+    FOOTER_BOOTM = 'fb'
 
 
 class Stargazer:
@@ -72,7 +81,7 @@ class Stargazer:
         self.sig_digits = 3
         self.confidence_intervals = False
         self.show_footer = True
-        self.custom_footer_text = []
+        self.custom_lines = defaultdict(list)
         self.show_n = True
         self.show_r2 = True
         self.show_adj_r2 = True
@@ -200,6 +209,28 @@ class Stargazer:
     def reset_covariate_order(self):
         if self.original_cov_names is not None:
             self.cov_names = self.original_cov_names
+
+    def add_line(self, label, values, location=LineLocation.BODY_BOTTOM):
+        """
+        Add a custom line to the table.
+
+        At each location, lines are added in the order at which this method is called.
+        To remove lines, modify the custom_lines[location] attribute.
+
+        Parameters
+        ----------
+        label : str
+            Name of the new line (left-most column).
+        values : list of str
+            List containing the custom content (one item per model).
+        location : LineLocation or str
+            Location at which to add the line. See list(LineLocation) for valid values.
+        """
+        assert len(values) == self.num_models, \
+            'values has to be an iterables with {} elements (one for each model)'.format(self.num_models)
+        if type(location) != LineLocation:
+            location = LineLocation(location)
+        self.custom_lines[location].append([label] + values)
 
     def show_degrees_of_freedom(self, show):
         assert type(show) == bool, 'Please input True/False'
@@ -330,8 +361,10 @@ class HTMLRenderer(Renderer):
         covariate reporting is.
         """
         body = ''
+        body += self.generate_custom_lines(LineLocation.BODY_TOP)
         for cov_name in self.cov_names:
             body += self.generate_cov_rows(cov_name)
+        body += self.generate_custom_lines(LineLocation.BODY_BOTTOM)
 
         return body
 
@@ -389,6 +422,7 @@ class HTMLRenderer(Renderer):
 
         if not self.show_footer:
             return footer
+        footer += self.generate_custom_lines(LineLocation.FOOTER_TOP)
         if self.show_n:
             footer += self.generate_observations()
         if self.show_r2:
@@ -399,12 +433,22 @@ class HTMLRenderer(Renderer):
             footer += self.generate_resid_std_err()
         if self.show_f_statistic:
             footer += self.generate_f_statistic()
+        footer += self.generate_custom_lines(LineLocation.FOOTER_BOOTM)
         footer += '<tr><td colspan="' + str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
         if self.show_notes:
             footer += self.generate_notes()
         footer += '</table>'
 
         return footer
+
+    def generate_custom_lines(self, location):
+        custom_text = ''
+        for custom_row in self.custom_lines[location]:
+            custom_text += '<tr><td style="text-align: left">' + str(custom_row[0]) + '</td>'
+            for custom_column in custom_row[1:]:
+                custom_text += '<td>' + str(custom_column) + '</td>'
+            custom_text += '</tr>'
+        return custom_text
 
     def generate_observations(self):
         obs_text = ''
@@ -541,10 +585,12 @@ class LaTeXRenderer(Renderer):
         covariate reporting is.
         """
         body = ''
+        body += self.generate_custom_lines(LineLocation.BODY_TOP)
         for cov_name in self.cov_names:
             body += self.generate_cov_rows(cov_name)
             if insert_empty_rows:
                 body += '  ' + '& '*len(self.num_models) + '\\\\\n'
+        body += self.generate_custom_lines(LineLocation.BODY_BOTTOM)
 
         return body
 
@@ -606,6 +652,7 @@ class LaTeXRenderer(Renderer):
 
         if not self.show_footer:
             return footer
+        footer += self.generate_custom_lines(LineLocation.FOOTER_TOP)
         if self.show_n:
             footer += self.generate_observations()
         if self.show_r2:
@@ -616,6 +663,7 @@ class LaTeXRenderer(Renderer):
             footer += self.generate_resid_std_err()
         if self.show_f_statistic:
             footer += self.generate_f_statistic()
+        footer += self.generate_custom_lines(LineLocation.FOOTER_BOOTM)
         footer += '\\hline\n\\hline \\\\[-1.8ex]\n'
         if self.show_notes:
             footer += self.generate_notes()
@@ -625,6 +673,15 @@ class LaTeXRenderer(Renderer):
             footer += '\n\\end{table}'
 
         return footer
+
+    def generate_custom_lines(self, location):
+        custom_text = ''
+        for custom_row in self.custom_lines[location]:
+            custom_text += ' ' + str(custom_row[0]) + ' '
+            for custom_column in custom_row[1:]:
+                custom_text += '& ' + str(custom_column) + ' '
+            custom_text += '\\\\\n'
+        return custom_text
 
     def generate_observations(self):
         obs_text = ''

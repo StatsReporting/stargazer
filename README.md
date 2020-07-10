@@ -32,6 +32,7 @@ This library implements many of the customization features found in the original
 * `show_degrees_of_freedom`: display or hide degrees of freedom
 * `custom_note_label`: label notes section at bottom of table
 * `add_custom_notes`: add custom notes to section at bottom of the table
+* `add_line`: add a custom line to the table
 * `append_notes`: display or hide statistical significance thresholds
 
 These features are agnostic of the rendering type and will be applied whether the user outputs in HTML, LaTeX, etc
