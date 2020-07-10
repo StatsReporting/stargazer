@@ -83,6 +83,7 @@ class Stargazer:
         self.notes_label = 'Note:'
         self.notes_append = True
         self.custom_notes = []
+        self.show_stars = True
         self.table_label = None
 
     def extract_data(self):
@@ -255,7 +256,7 @@ class Renderer:
                 raise exc
 
     def get_sig_icon(self, p_value, sig_char='*'):
-        if p_value is None:
+        if p_value is None or not self.show_stars:
             return ''
         if p_value >= self.sig_levels[0]:
             return ''
@@ -283,7 +284,6 @@ class HTMLRenderer(Renderer):
         html = self.generate_header()
         html += self.generate_body()
         html += self.generate_footer()
-
         return html
 
     def generate_header(self):
@@ -456,7 +456,7 @@ class HTMLRenderer(Renderer):
     def generate_notes(self):
         notes_text = ''
         notes_text += '<tr><td style="text-align: left">' + self.notes_label + '</td>'
-        if self.notes_append:
+        if self.notes_append and self.show_stars:
             notes_text += self.generate_p_value_section()
         notes_text += '</tr>'
         notes_text += self.generate_additional_notes()
@@ -674,7 +674,7 @@ class LaTeXRenderer(Renderer):
     def generate_notes(self):
         notes_text = ''
         notes_text += '\\textit{' + self.notes_label + '}'
-        if self.notes_append:
+        if self.notes_append and self.show_stars:
             notes_text += self.generate_p_value_section()
         notes_text += self.generate_additional_notes()
         return notes_text
