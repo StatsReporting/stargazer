@@ -14,6 +14,7 @@ Enhancements
 - Added ``table_label`` attribute and hidden the label if empty
 - Added the ``show_stars`` attribute to not features significance signs
 - Added the ``add_line()`` method to insert custom content
+- Added first unit tests
 
 
 Bug fixes
