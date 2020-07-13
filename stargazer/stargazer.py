@@ -254,15 +254,28 @@ class Stargazer:
     def _repr_html_(self):
         return self.render_html()
 
-    def render_latex(self, *args, **kwargs):
-        return LaTeXRenderer(self).render(*args, **kwargs)
+    def render_latex(self, *args, escape=False, **kwargs):
+        """
+        Render as LaTeX code.
+
+        Parameters
+        ----------
+        escape : bool
+            Escape special characters.
+
+        Returns
+        -------
+        str
+            The LaTeX code.
+        """
+        return LaTeXRenderer(self, escape=escape).render(*args, **kwargs)
 
 
 class Renderer:
     """
     Base class for renderers to specific formats. Only meant to be subclassed.
     """
-    def __init__(self, table):
+    def __init__(self, table, **kwargs):
         """
         Initialize a new renderer.
         
@@ -270,6 +283,7 @@ class Renderer:
         """
 
         self.table = table
+        self.kwargs = kwargs
 
     def __getattribute__(self, key):
         """
@@ -544,16 +558,14 @@ class LaTeXRenderer(Renderer):
         ('&', r'\&')
     ]
 
-    @staticmethod
-    def _escape(text):
+    def _escape(self, text):
         """Escape LaTeX special characters"""
-        if self.escape:
+        if 'escape' in self.kwargs and self.kwargs['escape']:
             for orig_char, escape_char in LaTeXRenderer._ESCAPE_CHARS:
                 text = text.replace(orig_char, escape_char)
         return text
 
-    def render(self, only_tabular=False, insert_empty_rows=False, escape=False):
-        self.escape = escape
+    def render(self, only_tabular=False, insert_empty_rows=False):
         latex = self.generate_header(only_tabular=only_tabular)
         latex += self.generate_body(insert_empty_rows=insert_empty_rows)
         latex += self.generate_footer(only_tabular=only_tabular)

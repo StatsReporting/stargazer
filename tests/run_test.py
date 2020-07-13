@@ -27,6 +27,12 @@ class StargazerTestCase(unittest.TestCase):
         for loc in LineLocation:
             self.assertIn(f' test {loc.value} & N/A & N/A \\', latex)
 
+    def test_render_latex(self):
+        # test escaping
+        self.stargazer.rename_covariates({'b': 'b_'})
+        self.assertIn(' b_ ', self.stargazer.render_latex())
+        self.assertIn(r' b\_ ', self.stargazer.render_latex(escape=True))
+
 
 if __name__ == '__main__':
     unittest.main()
