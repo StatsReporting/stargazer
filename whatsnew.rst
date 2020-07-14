@@ -1,4 +1,4 @@
-What's new in 0.0.5 (July 10, 2020)
+What's new in 0.0.5 (July 13, 2020)
 -----------------------------------
 
 This release introduced a large number of enhancements and bug fixes.
