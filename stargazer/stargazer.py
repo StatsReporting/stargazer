@@ -560,7 +560,7 @@ class LaTeXRenderer(Renderer):
 
     def _escape(self, text):
         """Escape LaTeX special characters"""
-        if 'escape' in self.kwargs and self.kwargs['escape']:
+        if self.kwargs.get('escape', False):
             for orig_char, escape_char in LaTeXRenderer._ESCAPE_CHARS:
                 text = text.replace(orig_char, escape_char)
         return text
