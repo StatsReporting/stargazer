@@ -4,7 +4,7 @@ What's new in 0.x.x (Xxx XX, 2020)
 Enhancements
 ^^^^^^^^^^^^
 
-- 
+- Support escaping LaTeX special characters in ``render_latex()`` (:issue:`60`)
 
 
 Bug fixes
