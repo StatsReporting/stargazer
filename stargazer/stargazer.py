@@ -254,15 +254,28 @@ class Stargazer:
     def _repr_html_(self):
         return self.render_html()
 
-    def render_latex(self, *args, **kwargs):
-        return LaTeXRenderer(self).render(*args, **kwargs)
+    def render_latex(self, *args, escape=False, **kwargs):
+        """
+        Render as LaTeX code.
+
+        Parameters
+        ----------
+        escape : bool
+            Escape special characters.
+
+        Returns
+        -------
+        str
+            The LaTeX code.
+        """
+        return LaTeXRenderer(self, escape=escape).render(*args, **kwargs)
 
 
 class Renderer:
     """
     Base class for renderers to specific formats. Only meant to be subclassed.
     """
-    def __init__(self, table):
+    def __init__(self, table, **kwargs):
         """
         Initialize a new renderer.
         
@@ -270,6 +283,7 @@ class Renderer:
         """
 
         self.table = table
+        self.kwargs = kwargs
 
     def __getattribute__(self, key):
         """
@@ -530,6 +544,27 @@ class HTMLRenderer(Renderer):
 class LaTeXRenderer(Renderer):
     fmt = 'LaTeX'
 
+    # LaTeX escape characters, borrowed from pandas.io.formats.latex
+    _ESCAPE_CHARS = [
+        ('\\', r'\textbackslash '),
+        ('_', r'\_'),
+        ('%', r'\%'),
+        ('$', r'\$'),
+        ('#', r'\#'),
+        ('{', r'\{'),
+        ('}', r'\}'),
+        ('~', r'\textasciitilde '),
+        ('^', r'\textasciicircum '),
+        ('&', r'\&')
+    ]
+
+    def _escape(self, text):
+        """Escape LaTeX special characters"""
+        if self.kwargs.get('escape', False):
+            for orig_char, escape_char in LaTeXRenderer._ESCAPE_CHARS:
+                text = text.replace(orig_char, escape_char)
+        return text
+
     def render(self, only_tabular=False, insert_empty_rows=False):
         latex = self.generate_header(only_tabular=only_tabular)
         latex += self.generate_body(insert_empty_rows=insert_empty_rows)
@@ -611,7 +646,7 @@ class LaTeXRenderer(Renderer):
             if cov_name in self.cov_map:
                 cov_print_name = self.cov_map[cov_name]
 
-        cov_text = ' ' + cov_print_name + ' '
+        cov_text = ' ' + self._escape(cov_print_name) + ' '
         for md in self.model_data:
             if cov_name in md['cov_names']:
                 cov_text += '& ' + self._float_format(md['cov_values'][cov_name])
@@ -752,6 +787,6 @@ class LaTeXRenderer(Renderer):
             #     notes_text += '\\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + note + '} \\\\\n'
             # else:
             #     notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + note + '} \\\\\n'
-            notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + note + '} \\\\\n'
+            notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + self._escape(note) + '} \\\\\n'
 
         return notes_text
