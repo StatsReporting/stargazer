@@ -14,6 +14,7 @@ from statsmodels.regression.linear_model import RegressionResultsWrapper
 from math import sqrt
 from collections import defaultdict
 from enum import Enum
+import numbers
 
 
 class LineLocation(Enum):
@@ -75,6 +76,7 @@ class Stargazer:
         self.show_model_nums = True
         self.original_cov_names = None
         self.cov_map = None
+        self.cov_spacing = None
         self.show_precision = True
         self.show_sig = True
         self.sig_levels = [0.1, 0.05, 0.01]
@@ -312,6 +314,15 @@ class Renderer:
         else:
             return sig_char * 3
 
+    def _generate_cov_spacing(self):
+        if self.cov_spacing is None:
+            return None
+        if isinstance(self.cov_spacing, numbers.Number):
+            # A number is interpreted in "em" by default:
+            return f'{self.cov_spacing}em'
+        else:
+            return self.cov_spacing
+
     def _float_format(self, value):
         """
         Format value to string, using the precision set by the user.
@@ -365,56 +376,71 @@ class HTMLRenderer(Renderer):
             header += '</tr>'
 
         header += '<tr><td colspan="' + str(self.num_models + 1)
-        header += '" style="border-bottom: 1px solid black"></td></tr>'
+        header += '" style="border-bottom: 1px solid black"></td></tr>\n'
 
         return header
+
+    def _generate_cov_style(self):
+        if self.cov_spacing is None:
+            return ''
+        spacing = self._generate_cov_spacing()
+        return f' style="padding-bottom:{spacing}"'
 
     def generate_body(self):
         """
         Generate the body of the results where the
         covariate reporting is.
         """
+
+        spacing = self._generate_cov_style()
+
         body = ''
         body += self.generate_custom_lines(LineLocation.BODY_TOP)
         for cov_name in self.cov_names:
-            body += self.generate_cov_rows(cov_name)
+            body += self.generate_cov_rows(cov_name, spacing)
         body += self.generate_custom_lines(LineLocation.BODY_BOTTOM)
 
         return body
 
-    def generate_cov_rows(self, cov_name):
+    def generate_cov_rows(self, cov_name, spacing):
         cov_text = ''
-        cov_text += self.generate_cov_main(cov_name)
+        main_spacing = spacing if not self.show_precision else ''
+        cov_text += self.generate_cov_main(cov_name, spacing=main_spacing)
         if self.show_precision:
-            cov_text += self.generate_cov_precision(cov_name)
+            cov_text += self.generate_cov_precision(cov_name, spacing=spacing)
         else:
             cov_text += '<tr></tr>'
 
         return cov_text
 
-    def generate_cov_main(self, cov_name):
+    def generate_cov_main(self, cov_name, spacing):
         cov_print_name = cov_name
         if self.cov_map is not None:
             cov_print_name = self.cov_map.get(cov_print_name, cov_name)
-        cov_text = '<tr><td style="text-align:left">' + cov_print_name + '</td>'
+        cov_text = (f'<tr><td style="text-align:left">'
+                    f'{cov_print_name}</td>')
         for md in self.model_data:
             if cov_name in md['cov_names']:
-                cov_text += '<td>'
+                cov_text += f'<td{spacing}>'
                 cov_text += self._float_format(md['cov_values'][cov_name])
                 if self.show_sig:
                     cov_text += '<sup>' + str(self.get_sig_icon(md['p_values'][cov_name])) + '</sup>'
                 cov_text += '</td>'
             else:
-                cov_text += '<td></td>'
-        cov_text += '</tr>'
+                cov_text += f'<td{spacing}></td>'
+        cov_text += '</tr>\n'
 
         return cov_text
 
-    def generate_cov_precision(self, cov_name):
-        cov_text = '<tr><td style="text-align:left"></td>'
+    def generate_cov_precision(self, cov_name, spacing):
+        # This is the only place where we need to add spacing and there's a
+        # "style" already:
+        space_style = (f';padding-bottom:{self._generate_cov_spacing()}'
+                       if self.cov_spacing else '')
+        cov_text = f'<tr><td style="text-align:left{space_style}"></td>'
         for md in self.model_data:
             if cov_name in md['cov_names']:
-                cov_text += '<td>('
+                cov_text += f'<td{spacing}>('
                 if self.confidence_intervals:
                     cov_text += self._float_format(md['conf_int_low_values'][cov_name]) + ' , '
                     cov_text += self._float_format(md['conf_int_high_values'][cov_name])
@@ -422,8 +448,8 @@ class HTMLRenderer(Renderer):
                     cov_text += self._float_format(md['cov_std_err'][cov_name])
                 cov_text += ')</td>'
             else:
-                cov_text += '<td></td>'
-        cov_text += '</tr>'
+                cov_text += f'<td{spacing}></td>'
+        cov_text += '</tr>\n'
 
         return cov_text
 
@@ -456,7 +482,7 @@ class HTMLRenderer(Renderer):
         return footer
 
     def generate_custom_lines(self, location):
-        custom_text = ''
+        custom_text = '\n'
         for custom_row in self.custom_lines[location]:
             custom_text += '<tr><td style="text-align: left">' + str(custom_row[0]) + '</td>'
             for custom_column in custom_row[1:]:
@@ -614,6 +640,12 @@ class LaTeXRenderer(Renderer):
 
         return header
 
+    def _generate_cov_end(self):
+        if self.cov_spacing is None:
+            return '\\\\\n'
+        spacing = self._generate_cov_spacing()
+        return f'\\\\[{spacing}]\n'
+
     def generate_body(self, insert_empty_rows=False):
         """
         Generate the body of the results where the
@@ -621,10 +653,14 @@ class LaTeXRenderer(Renderer):
         """
         body = ''
         body += self.generate_custom_lines(LineLocation.BODY_TOP)
+
+        cov_end = self._generate_cov_end()
+
         for cov_name in self.cov_names:
             body += self.generate_cov_rows(cov_name)
             if insert_empty_rows:
-                body += '  ' + '& '*len(self.num_models) + '\\\\\n'
+                body += '\\\\\n  ' + '& '*len(self.num_models)
+            body += cov_end
         body += self.generate_custom_lines(LineLocation.BODY_BOTTOM)
 
         return body
@@ -655,12 +691,11 @@ class LaTeXRenderer(Renderer):
                 cov_text += ' '
             else:
                 cov_text += '& '
-        cov_text += '\\\\\n'
 
         return cov_text
 
     def generate_cov_precision(self, cov_name):
-        cov_text = '  '
+        cov_text = '\\\\\n'
 
         for md in self.model_data:
             if cov_name in md['cov_names']:
@@ -673,7 +708,6 @@ class LaTeXRenderer(Renderer):
                 cov_text += ') '
             else:
                 cov_text += '& '
-        cov_text += '\\\\\n'
 
         return cov_text
 
