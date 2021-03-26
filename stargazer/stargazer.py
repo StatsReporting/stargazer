@@ -79,6 +79,7 @@ class Stargazer:
         self.cov_spacing = None
         self.show_precision = True
         self.show_sig = True
+        self.sig_stat = 'cov_std_err'
         self.sig_levels = [0.1, 0.05, 0.01]
         self.sig_digits = 3
         self.confidence_intervals = False
@@ -128,6 +129,8 @@ class Stargazer:
         statsmodels_map = {'p_values' : 'pvalues',
                            'cov_values' : 'params',
                            'cov_std_err' : 'bse',
+                           'cov_pvalues' : 'pvalues',
+                           'cov_tvalues' : 'tvalues',
                            'r2' : 'rsquared',
                            'r2_adj' : 'rsquared_adj',
                            'f_p_value' : 'f_pvalue',
@@ -192,6 +195,14 @@ class Stargazer:
     def show_confidence_intervals(self, show):
         assert type(show) == bool, 'Please input True/False'
         self.confidence_intervals = show
+
+    def show_pvalues(self):
+        """Show P-values in parentheses below coefficients"""
+        self.sig_stat = 'cov_pvalues'
+
+    def show_tvalues(self):
+        """Show T-statistics in parentheses below coefficients"""
+        self.sig_stat = 'cov_tvalues'
 
     def dependent_variable_name(self, name):
         assert type(name) == str, 'Please input a string to use as the depedent variable name'
@@ -280,7 +291,7 @@ class Renderer:
     def __init__(self, table, **kwargs):
         """
         Initialize a new renderer.
-        
+
         "table": Stargazer object to render
         """
 
@@ -445,7 +456,7 @@ class HTMLRenderer(Renderer):
                     cov_text += self._float_format(md['conf_int_low_values'][cov_name]) + ' , '
                     cov_text += self._float_format(md['conf_int_high_values'][cov_name])
                 else:
-                    cov_text += self._float_format(md['cov_std_err'][cov_name])
+                    cov_text += self._float_format(md[self.sig_stat][cov_name])
                 cov_text += ')</td>'
             else:
                 cov_text += f'<td{spacing}></td>'
@@ -704,7 +715,7 @@ class LaTeXRenderer(Renderer):
                     cov_text += self._float_format(md['conf_int_low_values'][cov_name]) + ' , '
                     cov_text += self._float_format(md['conf_int_high_values'][cov_name])
                 else:
-                    cov_text += self._float_format(md['cov_std_err'][cov_name])
+                    cov_text += self._float_format(md[self.sig_stat][cov_name])
                 cov_text += ') '
             else:
                 cov_text += '& '
