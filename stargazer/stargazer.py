@@ -112,7 +112,8 @@ class Stargazer:
         covs = []
         for md in self.model_data:
             covs = covs + list(md['cov_names'])
-        self.cov_names = sorted(set(covs))
+        # deduplicate cov_names list from multiple models with same dep-vars (but keep order seen)
+        self.cov_names = list(dict.fromkeys(covs))
 
     def _extract_feature(self, obj, feature):
         """
