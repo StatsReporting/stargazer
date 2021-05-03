@@ -87,7 +87,7 @@ class Stargazer:
         self.show_n = True
         self.show_r2 = True
         self.show_adj_r2 = True
-        self.show_p_adj_r2 = True
+        self.show_p_r2 = True
         self.show_residual_std_err = True
         self.show_f_statistic = True
         self.show_dof = True
@@ -131,7 +131,7 @@ class Stargazer:
                            'cov_std_err' : 'bse',
                            'r2' : 'rsquared',
                            'r2_adj' : 'rsquared_adj',
-                           'p_r2_adj': 'prsquared',
+                           'p_r2': 'prsquared',
                            'f_p_value' : 'f_pvalue',
                            'degree_freedom' : 'df_model',
                            'degree_freedom_resid' : 'df_resid',
@@ -471,8 +471,8 @@ class HTMLRenderer(Renderer):
             footer += self.generate_r2()
         if self.show_adj_r2:
             footer += self.generate_r2_adj()
-        if self.show_p_adj_r2:
-            footer += self.generate_p_r2_adj()
+        if self.show_p_r2:
+            footer += self.generate_p_r2()
         if self.show_residual_std_err:
             footer += self.generate_resid_std_err()
         if self.show_f_statistic:
@@ -518,11 +518,11 @@ class HTMLRenderer(Renderer):
         r2_text += '</tr>'
         return r2_text
 
-    def generate_p_r2_adj(self):
+    def generate_p_r2(self):
         r2_text = ''
-        r2_text += '<tr><td style="text-align: left">Pseudo R<sup>2</sup> Adjusted</td>'
+        r2_text += '<tr><td style="text-align: left">Pseudo R<sup>2</sup></td>'
         for md in self.model_data:
-            r2_text += '<td>' + self._float_format(md['p_r2_adj']) + '</td>'
+            r2_text += '<td>' + self._float_format(md['p_r2']) + '</td>'
         r2_text += '</tr>'
         return r2_text
 
@@ -740,8 +740,8 @@ class LaTeXRenderer(Renderer):
             footer += self.generate_r2()
         if self.show_adj_r2:
             footer += self.generate_r2_adj()
-        if self.show_p_adj_r2:
-            footer += self.generate_p_r2_adj()
+        if self.show_p_r2:
+            footer += self.generate_p_r2()
         if self.show_residual_std_err:
             footer += self.generate_resid_std_err()
         if self.show_f_statistic:
@@ -788,10 +788,10 @@ class LaTeXRenderer(Renderer):
         r2_text += '\\\\\n'
         return r2_text
 
-    def generate_p_r2_adj(self):
-        r2_text = 'Pseudo $R^2$ Adjusted'
+    def generate_p_r2(self):
+        r2_text = 'Pseudo $R^2$'
         for md in self.model_data:
-            r2_text += '& ' + self._float_format(md['p_r2_adj']) + ' '
+            r2_text += '& ' + self._float_format(md['p_r2']) + ' '
         r2_text += '\\\\\n'
         return r2_text
 
