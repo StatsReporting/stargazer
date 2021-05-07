@@ -82,3 +82,9 @@ You can remove the \begin{table} ... \end{table} as follows:
 ```python
 stargazer.render_latex(only_tabular = True)
 ```
+
+You can escape special characters in variables names as follows:
+
+```python
+stargazer.render_latex(escape = True)
+```
