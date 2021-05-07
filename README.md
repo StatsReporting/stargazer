@@ -76,3 +76,9 @@ stargazer.render_latex()
 ```
 
 ![](https://raw.githubusercontent.com/mwburke/stargazer/master/latex_example.png)
+
+You can remove the \begin{table} ... \end{table} as follows:
+
+```python
+stargazer.render_latex(only_tabular = True)
+```
