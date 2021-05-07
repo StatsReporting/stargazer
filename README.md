@@ -61,6 +61,13 @@ est2 = sm.OLS(endog=df['target'], exog=sm.add_constant(df[df.columns[0:6]])).fit
 stargazer = Stargazer([est, est2])
 ```
 
+### Remove degrees of freedom
+There is an option to remove the degrees of free from the table:
+
+```python
+stargazer_sum.show_dof = False
+```
+
 ### HTML Example
 
 ```python
