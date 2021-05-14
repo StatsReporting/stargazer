@@ -34,6 +34,12 @@ class Stargazer:
     and then render the results in either HTML or LaTeX.
     """
 
+    # This is a mapping from 'show_*' attribute to name of stat in data store.
+    # Only stats which can be automatically formatted. Order matters!
+    _auto_stats = [('n', 'nobs'),
+                   ('r2', 'r2'),
+                   ('adj_r2', 'r2_adj')]
+
     def __init__(self, models):
         self.models = models
         self.num_models = len(models)
@@ -272,11 +278,18 @@ class Stargazer:
         """
         return LaTeXRenderer(self, escape=escape).render(*args, **kwargs)
 
+    def _get_models_stats(self, stat):
+        return [md[stat] for md in self.model_data]
+
 
 class Renderer:
     """
     Base class for renderers to specific formats. Only meant to be subclassed.
     """
+
+    # Formatters for stats which are not formatted via Renderer._float_format()
+    _formatters = {'nobs' : lambda x : str(int(x))}
+
     def __init__(self, table, **kwargs):
         """
         Initialize a new renderer.
@@ -335,6 +348,11 @@ class Renderer:
 
 class HTMLRenderer(Renderer):
     fmt = 'html'
+
+    # Labels for stats in Stargazer._auto_stats:
+    _stats_labels = {'n' : 'Observations',
+                     'r2' : 'R<sup>2</sup>',
+                     'adj_r2' : 'Adjusted R<sup>2</sup>'}
 
     def render(self):
         html = self.generate_header()
@@ -463,12 +481,11 @@ class HTMLRenderer(Renderer):
         if not self.show_footer:
             return footer
         footer += self.generate_custom_lines(LineLocation.FOOTER_TOP)
-        if self.show_n:
-            footer += self.generate_observations()
-        if self.show_r2:
-            footer += self.generate_r2()
-        if self.show_adj_r2:
-            footer += self.generate_r2_adj()
+
+        for attr, stat in Stargazer._auto_stats:
+            if getattr(self, f'show_{attr}'):
+                footer += self.generate_stat(stat, self._stats_labels[attr])
+
         if self.show_residual_std_err:
             footer += self.generate_resid_std_err()
         if self.show_f_statistic:
@@ -490,29 +507,18 @@ class HTMLRenderer(Renderer):
             custom_text += '</tr>'
         return custom_text
 
-    def generate_observations(self):
-        obs_text = ''
-        obs_text += '<tr><td style="text-align: left">Observations</td>'
-        for md in self.model_data:
-            obs_text += '<td>{:,}</td>'.format(int(md['nobs']))
-        obs_text += '</tr>'
-        return obs_text
+    def generate_stat(self, stat, label):
+        values = self.table._get_models_stats(stat)
+        if not any(values):
+            return ''
 
-    def generate_r2(self):
-        r2_text = ''
-        r2_text += '<tr><td style="text-align: left">R<sup>2</sup></td>'
-        for md in self.model_data:
-            r2_text += '<td>' + self._float_format(md['r2']) + '</td>'
-        r2_text += '</tr>'
-        return r2_text
+        formatter = self._formatters.get(stat, self._float_format)
 
-    def generate_r2_adj(self):
-        r2_text = ''
-        r2_text += '<tr><td style="text-align: left">Adjusted R<sup>2</sup></td>'
-        for md in self.model_data:
-            r2_text += '<td>' + self._float_format(md['r2_adj']) + '</td>'
-        r2_text += '</tr>'
-        return r2_text
+        text = f'<tr><td style="text-align: left">{label}</td>'
+        for value in values:
+            text += '<td>' + formatter(value) +'</td>'
+        text += '</tr>'
+        return text
 
     def generate_resid_std_err(self):
         rse_text = ''
@@ -569,6 +575,11 @@ class HTMLRenderer(Renderer):
 
 class LaTeXRenderer(Renderer):
     fmt = 'LaTeX'
+
+    # Labels for stats in Stargazer._auto_stats:
+    _stats_labels = {'n' : 'Observations',
+                     'r2' : '$R^2$',
+                     'adj_r2' : 'Adjusted $R^2$'}
 
     # LaTeX escape characters, borrowed from pandas.io.formats.latex
     _ESCAPE_CHARS = [
@@ -722,12 +733,11 @@ class LaTeXRenderer(Renderer):
         if not self.show_footer:
             return footer
         footer += self.generate_custom_lines(LineLocation.FOOTER_TOP)
-        if self.show_n:
-            footer += self.generate_observations()
-        if self.show_r2:
-            footer += self.generate_r2()
-        if self.show_adj_r2:
-            footer += self.generate_r2_adj()
+
+        for attr, stat in Stargazer._auto_stats:
+            if getattr(self, f'show_{attr}'):
+                footer += self.generate_stat(stat, self._stats_labels[attr])
+
         if self.show_residual_std_err:
             footer += self.generate_resid_std_err()
         if self.show_f_statistic:
@@ -752,27 +762,18 @@ class LaTeXRenderer(Renderer):
             custom_text += '\\\\\n'
         return custom_text
 
-    def generate_observations(self):
-        obs_text = ''
-        obs_text += ' Observations '
-        for md in self.model_data:
-            obs_text += '& {:,} '.format(int(md['nobs']))
-        obs_text += '\\\\\n'
-        return obs_text
+    def generate_stat(self, stat, label):
+        values = self.table._get_models_stats(stat)
+        if not any(values):
+            return ''
 
-    def generate_r2(self):
-        r2_text = ' $R^2$ '
-        for md in self.model_data:
-            r2_text += '& ' + self._float_format(md['r2']) + ' '
-        r2_text += '\\\\\n'
-        return r2_text
+        formatter = self._formatters.get(stat, self._float_format)
 
-    def generate_r2_adj(self):
-        r2_text = ' Adjusted $R^2$ '
-        for md in self.model_data:
-            r2_text += '& ' + self._float_format(md['r2_adj']) + ' '
-        r2_text += '\\\\\n'
-        return r2_text
+        text = f' {label} '
+        for value in values:
+            text += '& {} '.format(formatter(value))
+        text += '\\\\\n'
+        return text
 
     def generate_resid_std_err(self):
         rse_text = ''
