@@ -76,10 +76,3 @@ stargazer.render_latex()
 ```
 
 ![](https://raw.githubusercontent.com/mwburke/stargazer/master/latex_example.png)
-
-Note that you can write the LaTeX table to a file using
-
-```
-with open("latex_example.tex", "w") as f:
-    f.write(stargazer.render_latex())
-```
