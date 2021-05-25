@@ -629,7 +629,7 @@ class LaTeXRenderer(Renderer):
         if self.dep_var_name is not None:
             header += '& \\multicolumn{' + str(self.num_models) + '}{c}'
             header += '{\\textit{' + self.dep_var_name + '}} \\\n'
-            header += '\\cr \\cline{' + str(self.num_models) + '-' + str(self.num_models + 1) + '}\n'
+            header += '\\cr \\cline{2-' + str(self.num_models + 1) + '}\n'
 
         if self.column_labels is not None:
             if type(self.column_labels) == str:
