@@ -76,7 +76,7 @@ class Stargazer:
         """
         self.title_text = None
         self.show_header = True
-        self.dep_var_name = 'Dependent variable:'
+        self.dep_var_name = 'Dependent variable: '
         self.column_labels = None
         self.column_separators = None
         self.show_model_nums = True
@@ -628,7 +628,7 @@ class LaTeXRenderer(Renderer):
         header += '\\hline \\\\[-1.8ex]\n'
         if self.dep_var_name is not None:
             header += '& \\multicolumn{' + str(self.num_models) + '}{c}'
-            header += '{\\textit{' + self.dep_var_name + '}} \\\n'
+            header += '{\\textit{' + self.dep_var_name + self.dependent_variable + '}} \\\n'
             header += '\\cr \\cline{2-' + str(self.num_models + 1) + '}\n'
 
         if self.column_labels is not None:
