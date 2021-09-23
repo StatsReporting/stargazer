@@ -89,7 +89,7 @@ class Stargazer:
         self.show_sig = True
         self.sig_levels = [0.1, 0.05, 0.01]
         self.sig_digits = 3
-        self.t_statistic = True
+        self.t_statistic = False
         self.confidence_intervals = False
         self.show_footer = True
         self.custom_lines = defaultdict(list)
@@ -208,6 +208,10 @@ class Stargazer:
         assert type(digits) == int, 'The number of significant digits must be an int'
         assert digits < 10, 'Whoa hold on there bud, maybe use fewer digits'
         self.sig_digits = digits
+    
+    def show_t_statistic(self, show):
+        assert type(show) == bool, 'Please input True/False'
+        self.t_statistic = show
 
     def show_confidence_intervals(self, show):
         assert type(show) == bool, 'Please input True/False'
@@ -473,7 +477,9 @@ class HTMLRenderer(Renderer):
         for md in self.model_data:
             if cov_name in md['cov_names']:
                 cov_text += f'<td{spacing}>('
-                if self.confidence_intervals:
+                if self.t_statistic:
+                    cov_text += self._float_format(md['cov_values'][cov_name] / md['cov_std_err'][cov_name])
+                elif self.confidence_intervals:
                     cov_text += self._float_format(md['conf_int_low_values'][cov_name]) + ' , '
                     cov_text += self._float_format(md['conf_int_high_values'][cov_name])
                 else:
