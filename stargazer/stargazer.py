@@ -89,6 +89,7 @@ class Stargazer:
         self.show_sig = True
         self.sig_levels = [0.1, 0.05, 0.01]
         self.sig_digits = 3
+        self.t_statistic = True
         self.confidence_intervals = False
         self.show_footer = True
         self.custom_lines = defaultdict(list)
@@ -724,7 +725,9 @@ class LaTeXRenderer(Renderer):
         for md in self.model_data:
             if cov_name in md['cov_names']:
                 cov_text += '& ('
-                if self.confidence_intervals:
+                if self.t_statistic:
+                    cov_text += self._float_format(md['cov_values'][cov_name] / md['cov_std_err'][cov_name])
+                elif self.confidence_intervals:
                     cov_text += self._float_format(md['conf_int_low_values'][cov_name]) + ' , '
                     cov_text += self._float_format(md['conf_int_high_values'][cov_name])
                 else:
