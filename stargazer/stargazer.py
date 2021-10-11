@@ -163,7 +163,8 @@ class Stargazer:
 
         data['conf_int_low_values'] = model.conf_int()[0]
         data['conf_int_high_values'] = model.conf_int()[1]
-        data['resid_std_err'] = sqrt(model.scale)
+        data['resid_std_err'] = (sqrt(sum(model.resid**2) / model.df_resid)
+                                 if hasattr(model, 'resid') else None)
 
         # Workaround for
         # https://github.com/statsmodels/statsmodels/issues/6778:
@@ -537,9 +538,12 @@ class HTMLRenderer(Renderer):
         rse_text = ''
         rse_text += '<tr><td style="text-align: left">Residual Std. Error</td>'
         for md in self.model_data:
-            rse_text += '<td>' + self._float_format(md['resid_std_err'])
-            if self.show_dof:
-                rse_text += ' (df={degree_freedom_resid:.0f})'.format(**md)
+            rse = md['resid_std_err']
+            rse_text += '<td>'
+            if rse is not None:
+                rse_text += self._float_format(rse)
+                if self.show_dof:
+                    rse_text += ' (df={degree_freedom_resid:.0f})'.format(**md)
             rse_text += '</td>'
         rse_text += '</tr>'
         return rse_text
