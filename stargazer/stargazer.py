@@ -35,11 +35,15 @@ class Stargazer:
     and then render the results in either HTML or LaTeX.
     """
 
-    # This is a mapping from 'show_*' attribute to name of stat in data store.
-    # Only stats which can be automatically formatted. Order matters!
+    # This is a mapping from 'show_*' attribute to name of generating method
+    # "_generate_{LABEL}" (if present) and to name of stat in data store
+    # otherwise.
+    # Stats will be automatically formatted. Order matters!
     _auto_stats = [('n', 'nobs'),
                    ('r2', 'r2'),
-                   ('adj_r2', 'r2_adj')]
+                   ('adj_r2', 'r2_adj'),
+                   ('residual_std_err', 'resid_std_err'),
+                   ('f_statistic', 'f_statistic')]
 
     def __init__(self, models):
         self.models = models
@@ -292,9 +296,6 @@ class Stargazer:
         """
         return LaTeXRenderer(self, escape=escape).render(*args, **kwargs)
 
-    def _get_models_stats(self, stat):
-        return [md[stat] for md in self.model_data]
-
 
 class Renderer:
     """
@@ -359,6 +360,35 @@ class Renderer:
 
         return '{{:.{prec}f}}'.format(prec=self.sig_digits).format(value)
 
+    def _generate_resid_std_err(self, md):
+        rse = md['resid_std_err']
+        if rse is None:
+            return None
+
+        rse_text = self._float_format(rse)
+        if self.show_dof:
+            rse_text += ' (df={degree_freedom_resid:.0f})'.format(**md)
+        return rse_text
+
+    def _generate_f_statistic(self, md):
+        f_stat = md['f_statistic']
+        if f_stat is None:
+            return None
+
+        f_stars = self._format_sig_icon(md['f_p_value'])
+        f_text = f'{self._float_format(f_stat)}{f_stars}'
+        if self.show_dof:
+            f_text += (' (df={degree_freedom:.0f}; '
+                       '{degree_freedom_resid:.0f})').format(**md)
+
+        return f_text
+
+    def _generate_stat_values(self, stat):
+        if hasattr(self, f'_generate_{stat}'):
+            generator = getattr(self, f'_generate_{stat}')
+            return [generator(md) for md in self.model_data]
+        else:
+            return [md[stat] for md in self.model_data]
 
 class HTMLRenderer(Renderer):
     fmt = 'html'
@@ -366,7 +396,9 @@ class HTMLRenderer(Renderer):
     # Labels for stats in Stargazer._auto_stats:
     _stats_labels = {'n' : 'Observations',
                      'r2' : 'R<sup>2</sup>',
-                     'adj_r2' : 'Adjusted R<sup>2</sup>'}
+                     'adj_r2' : 'Adjusted R<sup>2</sup>',
+                     'residual_std_err' : 'Residual Std. Error',
+                     'f_statistic' : 'F Statistic'}
 
     def render(self):
         html = self.generate_header()
@@ -418,6 +450,9 @@ class HTMLRenderer(Renderer):
         spacing = self._generate_cov_spacing()
         return f' style="padding-bottom:{spacing}"'
 
+    def _format_sig_icon(self, pvalue):
+        return '<sup>' + str(self.get_sig_icon(pvalue)) + '</sup>'
+
     def generate_body(self):
         """
         Generate the body of the results where the
@@ -456,7 +491,7 @@ class HTMLRenderer(Renderer):
                 cov_text += f'<td{spacing}>'
                 cov_text += self._float_format(md['cov_values'][cov_name])
                 if self.show_sig:
-                    cov_text += '<sup>' + str(self.get_sig_icon(md['p_values'][cov_name])) + '</sup>'
+                    cov_text += self._format_sig_icon(md['p_values'][cov_name])
                 cov_text += '</td>'
             else:
                 cov_text += f'<td{spacing}></td>'
@@ -500,10 +535,6 @@ class HTMLRenderer(Renderer):
             if getattr(self, f'show_{attr}'):
                 footer += self.generate_stat(stat, self._stats_labels[attr])
 
-        if self.show_residual_std_err:
-            footer += self.generate_resid_std_err()
-        if self.show_f_statistic:
-            footer += self.generate_f_statistic()
         footer += self.generate_custom_lines(LineLocation.FOOTER_BOOTM)
         footer += '<tr><td colspan="' + str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
         if self.show_notes:
@@ -522,7 +553,7 @@ class HTMLRenderer(Renderer):
         return custom_text
 
     def generate_stat(self, stat, label):
-        values = self.table._get_models_stats(stat)
+        values = self._generate_stat_values(stat)
         if not any(values):
             return ''
 
@@ -530,35 +561,11 @@ class HTMLRenderer(Renderer):
 
         text = f'<tr><td style="text-align: left">{label}</td>'
         for value in values:
-            text += '<td>' + formatter(value) +'</td>'
+            if not isinstance(value, str):
+                value = formatter(value)
+            text += f'<td>{value}</td>'
         text += '</tr>'
         return text
-
-    def generate_resid_std_err(self):
-        rse_text = ''
-        rse_text += '<tr><td style="text-align: left">Residual Std. Error</td>'
-        for md in self.model_data:
-            rse = md['resid_std_err']
-            rse_text += '<td>'
-            if rse is not None:
-                rse_text += self._float_format(rse)
-                if self.show_dof:
-                    rse_text += ' (df={degree_freedom_resid:.0f})'.format(**md)
-            rse_text += '</td>'
-        rse_text += '</tr>'
-        return rse_text
-
-    def generate_f_statistic(self):
-        f_text = ''
-        f_text += '<tr><td style="text-align: left">F Statistic</td>'
-        for md in self.model_data:
-            f_text += '<td>' + self._float_format(md['f_statistic'])
-            f_text += '<sup>' + self.get_sig_icon(md['f_p_value']) + '</sup>'
-            if self.show_dof:
-                f_text += ' (df={degree_freedom:.0f}; {degree_freedom_resid:.0f})'.format(**md)
-            f_text += '</td>'
-        f_text += '</tr>'
-        return f_text
 
     def generate_notes(self):
         notes_text = ''
@@ -570,12 +577,11 @@ class HTMLRenderer(Renderer):
         return notes_text
 
     def generate_p_value_section(self):
-        notes_text = """
- <td colspan="{}" style="text-align: right">
-  <sup>*</sup>p&lt;{};
-  <sup>**</sup>p&lt;{};
-  <sup>***</sup>p&lt;{}
- </td>""".format(self.num_models, *self.sig_levels)
+        notes_text = f'<td colspan="{self.num_models}" style="text-align: right">'
+        pval_cells = [self._format_sig_icon(self.sig_levels[idx] - 0.001)
+                      + 'p&lt;' + str(self.sig_levels[idx]) for idx in range(3)]
+        notes_text += '; '.join(pval_cells)
+        notes_text += '</td>'
         return notes_text
 
     def generate_additional_notes(self):
@@ -596,7 +602,9 @@ class LaTeXRenderer(Renderer):
     # Labels for stats in Stargazer._auto_stats:
     _stats_labels = {'n' : 'Observations',
                      'r2' : '$R^2$',
-                     'adj_r2' : 'Adjusted $R^2$'}
+                     'adj_r2' : 'Adjusted $R^2$',
+                     'residual_std_err' : 'Residual Std. Error',
+                     'f_statistic' : 'F Statistic'}
 
     # LaTeX escape characters, borrowed from pandas.io.formats.latex
     _ESCAPE_CHARS = [
@@ -674,6 +682,9 @@ class LaTeXRenderer(Renderer):
         spacing = self._generate_cov_spacing()
         return f'\\\\[{spacing}]\n'
 
+    def _format_sig_icon(self, pvalue):
+        return '$^{' + str(self.get_sig_icon(pvalue)) + '}$'
+
     def generate_body(self, insert_empty_rows=False):
         """
         Generate the body of the results where the
@@ -715,7 +726,7 @@ class LaTeXRenderer(Renderer):
             if cov_name in md['cov_names']:
                 cov_text += '& ' + self._float_format(md['cov_values'][cov_name])
                 if self.show_sig:
-                    cov_text += '$^{' + str(self.get_sig_icon(md['p_values'][cov_name])) + '}$'
+                    cov_text += self._format_sig_icon(md['p_values'][cov_name])
                 cov_text += ' '
             else:
                 cov_text += '& '
@@ -755,10 +766,6 @@ class LaTeXRenderer(Renderer):
             if getattr(self, f'show_{attr}'):
                 footer += self.generate_stat(stat, self._stats_labels[attr])
 
-        if self.show_residual_std_err:
-            footer += self.generate_resid_std_err()
-        if self.show_f_statistic:
-            footer += self.generate_f_statistic()
         footer += self.generate_custom_lines(LineLocation.FOOTER_BOOTM)
         footer += '\\hline\n\\hline \\\\[-1.8ex]\n'
         if self.show_notes:
@@ -780,7 +787,7 @@ class LaTeXRenderer(Renderer):
         return custom_text
 
     def generate_stat(self, stat, label):
-        values = self.table._get_models_stats(stat)
+        values = self._generate_stat_values(stat)
         if not any(values):
             return ''
 
@@ -788,32 +795,11 @@ class LaTeXRenderer(Renderer):
 
         text = f' {label} '
         for value in values:
-            text += '& {} '.format(formatter(value))
+            if not isinstance(value, str):
+                value = formatter(value)
+            text += f'& {value} '
         text += '\\\\\n'
         return text
-
-    def generate_resid_std_err(self):
-        rse_text = ''
-        rse_text += ' Residual Std. Error '
-        for md in self.model_data:
-            rse_text += '& ' + self._float_format(md['resid_std_err'])
-            if self.show_dof:
-                rse_text += '(df = {:d})'.format(int(md['degree_freedom_resid']))
-            rse_text += ' '
-        rse_text += ' \\\\\n'
-        return rse_text
-
-    def generate_f_statistic(self):
-        f_text = ''
-        f_text += ' F Statistic '
-        for md in self.model_data:
-            f_text += '& ' + self._float_format(md['f_statistic'])
-            f_text += '$^{' + self.get_sig_icon(md['f_p_value']) + '}$ '
-            if self.show_dof:
-                f_text += '(df = ' + str(md['degree_freedom']) + '; ' + str(md['degree_freedom_resid']) + ')'
-            f_text += ' '
-        f_text += '\\\\\n'
-        return f_text
 
     def generate_notes(self):
         notes_text = ''
@@ -824,10 +810,11 @@ class LaTeXRenderer(Renderer):
         return notes_text
 
     def generate_p_value_section(self):
-        notes_text = ''
-        notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}{$^{' + self.get_sig_icon(self.sig_levels[0] - 0.001) + '}$p$<$' + str(self.sig_levels[0]) + '; '
-        notes_text += '$^{' + self.get_sig_icon(self.sig_levels[1] - 0.001) + '}$p$<$' + str(self.sig_levels[1]) + '; '
-        notes_text += '$^{' + self.get_sig_icon(self.sig_levels[2] - 0.001) + '}$p$<$' + str(self.sig_levels[2]) + '} \\\\\n'
+        notes_text = ' & \\multicolumn{' + str(self.num_models) + '}{r}{'
+        pval_cells = [self._format_sig_icon(self.sig_levels[idx] - 0.001)
+                      + 'p$<$' + str(self.sig_levels[idx]) for idx in range(3)]
+        notes_text += '; '.join(pval_cells)
+        notes_text += '} \\\\\n'
         return notes_text
 
     def generate_additional_notes(self):
