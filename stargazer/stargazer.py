@@ -10,8 +10,8 @@ https://CRAN.R-project.org/package=stargazer
         github.com/mwburke
 """
 
-from statsmodels.regression.linear_model import (RegressionResultsWrapper,
-                                                 RegressionResults)
+from statsmodels.base.wrapper import ResultsWrapper
+from statsmodels.regression.linear_model import RegressionResults
 from math import sqrt
 from collections import defaultdict
 from enum import Enum
@@ -61,7 +61,7 @@ class Stargazer:
         targets = []
 
         for m in self.models:
-            if not isinstance(m, (RegressionResultsWrapper,
+            if not isinstance(m, (ResultsWrapper,
                                   RegressionResults)):
                 raise ValueError('Please use trained OLS models as inputs')
             targets.append(m.model.endog_names)
@@ -153,7 +153,7 @@ class Stargazer:
         for key, val in statsmodels_map.items():
             data[key] = self._extract_feature(model, val)
 
-        if isinstance(model, RegressionResultsWrapper):
+        if isinstance(model, ResultsWrapper):
             data['cov_names'] = model.params.index.values
         else:
             # Simple RegressionResults, for instance as a result of
