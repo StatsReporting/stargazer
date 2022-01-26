@@ -826,6 +826,6 @@ class LaTeXRenderer(Renderer):
             #     notes_text += '\\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + note + '} \\\\\n'
             # else:
             #     notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + note + '} \\\\\n'
-            notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + self._escape(note) + '} \\\\\n'
+            notes_text += '\\multicolumn{' + str(self.num_models+1) + '}{r}\\textit{' + self._escape(note) + '} \\\\\n'
 
         return notes_text
