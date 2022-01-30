@@ -5,6 +5,9 @@ package of the same name:
 https://CRAN.R-project.org/package=stargazer
 
 @authors:
+    Pietro Battiston
+        me@pietrobattiston.it
+        https://pietrobattiston.it
     Matthew Burke:
         matthew.wesley.burke@gmail.com
         github.com/mwburke
