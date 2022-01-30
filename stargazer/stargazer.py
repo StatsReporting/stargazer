@@ -592,7 +592,7 @@ class HTMLRenderer(Renderer):
         for i, note in enumerate(self.custom_notes):
             if (i != 0) | (self.notes_append):
                 notes_text += '<tr>'
-            notes_text += '<td></td><td colspan="' + str(self.num_models) + '" style="text-align: right">' + note + '</td></tr>'
+            notes_text += '<td colspan="' + str(self.num_models+1) + '" style="text-align: right">' + note + '</td></tr>'
 
         return notes_text
 
@@ -826,6 +826,6 @@ class LaTeXRenderer(Renderer):
             #     notes_text += '\\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + note + '} \\\\\n'
             # else:
             #     notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + note + '} \\\\\n'
-            notes_text += ' & \\multicolumn{' + str(self.num_models) + '}{r}\\textit{' + self._escape(note) + '} \\\\\n'
+            notes_text += '\\multicolumn{' + str(self.num_models+1) + '}{r}\\textit{' + self._escape(note) + '} \\\\\n'
 
         return notes_text
