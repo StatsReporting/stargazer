@@ -108,6 +108,7 @@ class Stargazer:
         self.custom_notes = []
         self.show_stars = True
         self.table_label = None
+        self.latex_text_size = ""
 
     def extract_data(self):
         """
@@ -273,6 +274,13 @@ class Stargazer:
     def append_notes(self, append):
         assert type(append) == bool, 'Please input True/False'
         self.notes_append = append
+
+    def latex_size(self, size):
+        latex_sizes = [ "tiny", "scriptsize", "footnotesize", "small", "normalsize",
+                        "large", "Large", "LARGE", "huge", "Huge" ]
+        assert type(size) == str, "Please input a string argument for latex text size among:\n"+str(latex_sizes)
+        assert size in latex_sizes, "Please input a valid latex text size among the following:\n"+str(latex_sizes)
+        self.latex_text_size = size
 
     def render_html(self, *args, **kwargs):
         return HTMLRenderer(self).render(*args, **kwargs)
@@ -637,7 +645,8 @@ class LaTeXRenderer(Renderer):
     def generate_header(self, only_tabular=False):
         header = ''
         if not only_tabular:
-            header += '\\begin{table}[!htbp] \\centering\n'
+            size = "" if self.latex_text_size == "" else "\\"+self.latex_text_size
+            header += '\\begin{table}[!htbp] \\centering ' + size + ' \n'
             if not self.show_header:
                 return header
 
