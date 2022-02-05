@@ -25,7 +25,7 @@ class LineLocation(Enum):
     BODY_TOP = 'bt'
     BODY_BOTTOM = 'bb'
     FOOTER_TOP = 'ft'
-    FOOTER_BOOTM = 'fb'
+    FOOTER_BOTTOM = 'fb'
 
 
 class Stargazer:
@@ -538,7 +538,7 @@ class HTMLRenderer(Renderer):
             if getattr(self, f'show_{attr}'):
                 footer += self.generate_stat(stat, self._stats_labels[attr])
 
-        footer += self.generate_custom_lines(LineLocation.FOOTER_BOOTM)
+        footer += self.generate_custom_lines(LineLocation.FOOTER_BOTTOM)
         footer += '<tr><td colspan="' + str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
         if self.show_notes:
             footer += self.generate_notes()
@@ -769,7 +769,7 @@ class LaTeXRenderer(Renderer):
             if getattr(self, f'show_{attr}'):
                 footer += self.generate_stat(stat, self._stats_labels[attr])
 
-        footer += self.generate_custom_lines(LineLocation.FOOTER_BOOTM)
+        footer += self.generate_custom_lines(LineLocation.FOOTER_BOTTOM)
         footer += '\\hline\n\\hline \\\\[-1.8ex]\n'
         if self.show_notes:
             footer += self.generate_notes()
