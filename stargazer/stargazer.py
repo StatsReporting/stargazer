@@ -876,7 +876,7 @@ class ExcelRenderer(Renderer):
             row += 1
 
         if self.dep_var_name is not None:
-            ws.write(row, col, '', wb.add_format({'top': 6, 'bottom': 1}))
+            ws.write(row, col, '', wb.add_format({'top': 6, 'bottom': 0}))
             ws.merge_range(row, col+1, 
                 row, col+self.num_models, 
                 self.dep_var_name + self.dependent_variable, 
