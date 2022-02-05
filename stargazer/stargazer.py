@@ -20,6 +20,7 @@ from collections import defaultdict
 from enum import Enum
 import numbers
 import pandas as pd
+import xlsxwriter
 
 class LineLocation(Enum):
     BODY_TOP = 'bt'
@@ -298,6 +299,9 @@ class Stargazer:
             The LaTeX code.
         """
         return LaTeXRenderer(self, escape=escape).render(*args, **kwargs)
+    
+    def render_excel(self, *args, **kwargs):
+        return ExcelRenderer(self).render(*args, **kwargs)
 
 
 class Renderer:
@@ -832,3 +836,208 @@ class LaTeXRenderer(Renderer):
             notes_text += '\\multicolumn{' + str(self.num_models+1) + '}{r}\\textit{' + self._escape(note) + '} \\\\\n'
 
         return notes_text
+
+class ExcelRenderer(Renderer):
+    fmt = 'Excel'
+
+    # Labels for stats in Stargazer._auto_stats:
+    _stats_labels = {'n' : 'Observations',
+                     'r2' : 'R²',
+                     'adj_r2' : 'Adjusted R²',
+                     'residual_std_err' : 'Residual Std. Error',
+                     'f_statistic' : 'F Statistic'}
+    
+    def render(self, filename='workbook.xlsx', ignore_errors=True, fit_to_width=True, cell_height=20, start_row=1, start_col=1, insert_empty_rows=False):
+        with xlsxwriter.Workbook(filename) as wb:
+            ws = wb.add_worksheet()
+            row = self.generate_header(wb, ws, start_row, start_col)
+            row = self.generate_body(wb, ws, row, start_col, insert_empty_rows=insert_empty_rows)
+            row = self.generate_footer(wb, ws, row, start_col)
+
+            if ignore_errors:
+                ws.ignore_errors(
+                    {'number_stored_as_text': f'A1:{self._excel_col(start_col+1+self.num_models)}{row+1}'}
+                )
+            
+            if fit_to_width:
+                self._fit_to_width(ws, start_col)
+
+            if cell_height > 0:
+                for i in range(start_row, row):
+                    ws.set_row(i, cell_height)
+
+    def generate_header(self, wb, ws, row, col):
+
+        if not self.show_header:
+            return
+
+        if self.title_text is not None:
+            ws.write(row, col, self.title_text)
+            row += 1
+
+        if self.dep_var_name is not None:
+            ws.write(row, col, '', wb.add_format({'top': 6, 'bottom': 1}))
+            ws.merge_range(row, col+1, 
+                row, col+self.num_models, 
+                self.dep_var_name + self.dependent_variable, 
+                wb.add_format({'top' : 6, 'bottom': 1, 'align' : 'center', 'valign': 'vcenter', 'italic' : True})
+            )
+            row += 1
+        
+        if self.show_model_nums:
+
+            if self.dep_var_name is not None:
+                format1 = {'top': 0, 'bottom': 1}
+                format2 = {'bottom': 1, 'align': 'center', 'valign': 'vcenter'}
+            else:
+                format1 = {'top': 6, 'bottom': 1}
+                format2 = {'top': 6, 'bottom': 1, 'align': 'center', 'valign': 'vcenter'}
+            
+            ws.write(row, col, '', wb.add_format(format1))
+            ws.write_row(row,col+1,
+                [f'({i})' for i in range(1,self.num_models+1)], 
+                wb.add_format(format2)
+            )
+            row += 1
+
+        return row
+
+    def generate_body(self, wb, ws, row, col, insert_empty_rows=False):
+
+        row = self.generate_custom_lines(LineLocation.BODY_TOP, wb, ws, row, col)
+
+        for cov_name in self.cov_names:
+            row = self.generate_cov_rows(wb, ws, row, col, cov_name)
+            if insert_empty_rows:
+                row += 1
+
+        row = self.generate_custom_lines(LineLocation.BODY_BOTTOM, wb, ws, row, col)
+
+        return row
+
+    def generate_cov_rows(self, wb, ws, row, col, cov_name):
+
+        cov_print_name = cov_name
+        if self.cov_map is not None:
+            cov_print_name = self.cov_map.get(cov_print_name, cov_name)
+
+        ws.write(row, col, cov_print_name, wb.add_format({'align': 'left', 'valign': 'vcenter'}))
+        ws.write(row+1, col, '', wb.add_format({'align': 'left', 'valign': 'vcenter'}))
+
+        for (i, md) in enumerate(self.model_data):  # refactor to generate_cov_rows
+
+            if cov_name in md['cov_names']:
+                cov_text = self._float_format(md['cov_values'][cov_name])
+
+                if self.show_sig:
+                    cov_text += self._format_sig_icon(md['p_values'][cov_name])
+
+                cov_prec_text = '('
+
+                if self.confidence_intervals:
+                    cov_prec_text += self._float_format(md['conf_int_low_values'][cov_name]) + ' , '
+                    cov_prec_text += self._float_format(md['conf_int_high_values'][cov_name])
+                else:
+                    cov_prec_text += self._float_format(md['cov_std_err'][cov_name])
+
+                cov_prec_text += ')'
+
+            else:
+                cov_text = ''
+                cov_prec_text = ''
+
+            ws.write(row, col+1+i, cov_text, wb.add_format({'align': 'center', 'valign': 'vcenter'}))
+            ws.write(row+1, col+1+i, cov_prec_text, wb.add_format({'align': 'center', 'valign': 'vcenter'}))
+        
+        row += 2
+        return row
+
+    def generate_footer(self, wb, ws, row, col):
+
+        if not self.show_footer:
+            return
+
+        for (i,(attr, stat)) in enumerate(Stargazer._auto_stats):
+            if getattr(self, f'show_{attr}'):
+                self._generate_stat(wb, ws, stat, self._stats_labels[attr], row, col, i, len(Stargazer._auto_stats))
+                row +=1
+
+        if self.show_notes:
+            ws.write(row, 1, self.notes_label, wb.add_format({'align': 'left', 'italic' : True, 'top': 6, 'valign': 'vcenter'}))
+            if self.notes_append and self.show_stars:
+                ws.merge_range(row, col+1, row, col+self.num_models, self._generate_p_value_section(), wb.add_format({'align': 'right', 'top': 6, 'valign': 'vcenter'}))
+            row += 1
+
+        return row
+
+    def _format_sig_icon(self, pvalue):
+        return '*' * len(str(self.get_sig_icon(pvalue)))
+
+    def _generate_p_value_section(self):
+        return '; '.join([self._format_sig_icon(sig_level - 0.001)
+                      + '<' + str(sig_level) for sig_level in self.sig_levels])
+
+    def _excel_col(self, col):
+        quot, rem = divmod(col-1,26)
+        return self._excel_col(quot) + chr(rem+ord('A')) if col!=0 else ''
+
+    def generate_custom_lines(self, location, wb, ws, row, col):
+        for custom_row in self.custom_lines[location]:
+            format1 = {'align': 'left', 'valign': 'vcenter'}
+            format2 = {'align': 'center', 'valign': 'vcenter'}
+
+            if 'BOTTOM' in location.name:
+                format1 = {'align': 'left', 'valign': 'vcenter', 'bottom': 1}
+                format2 = {'align': 'center', 'valign': 'vcenter', 'bottom': 1}
+
+                if 'FOOTER' in location.name:
+                    format1['bottom'] = 6
+                    format1['bottom'] = 6
+
+            ws.write(row, col, str(custom_row[0]), wb.add_format(format1))
+            ws.write_row(row, col+1, [str(custom_column) for custom_column in custom_row[1:]], wb.add_format(format2))
+            row += 1
+
+        return row
+
+    def _generate_stat(self, wb, ws, stat, label, row, col, i, n):
+        values = self._generate_stat_values(stat)
+        if not any(values):
+            return ''
+
+        format = {'align': 'left', 'valign': 'vcenter'}
+        if n == 1:
+            format.update({'top': 1, 'bottom': 6})
+        elif i == 0:
+            format.update({'top': 1})
+        elif i == n - 1:
+            format.update({'bottom': 6})
+
+        ws.write(row, col, label, wb.add_format(format))
+
+        format['align'] = 'center'
+        formatter = self._formatters.get(stat, self._float_format)
+        for (j, value) in enumerate(values):
+            if not isinstance(value, str):
+                value = formatter(value)
+            ws.write(row, col+1+j, value, wb.add_format(format))
+
+    def _fit_to_width(self, ws, col, min_width=15, max_width=75):
+
+        data = ws.table
+        str_data = ws.str_table
+
+        string_idxs = [[d[i].string if hasattr(d.get(i), 'string') else None for d in data.values()] for i in range(1,2+self.num_models)]
+        string_idx_mapper = {v:k  for k,v in str_data.string_table.items()}
+
+        df = pd.DataFrame(string_idxs).transpose().stack().reset_index(level=0, drop=True)
+        df = df.map(string_idx_mapper).apply(len)
+
+        width_index = df[df.index==0].max()
+        width_values = df[df.index!=0].max()
+
+        width_index = max(min(width_index*0.9, max_width), min_width)
+        width_values = max(min(width_values*0.9, max_width), min_width)
+
+        ws.set_column(col, col, width_index)
+        ws.set_column(col+1, col+self.num_models, width_values)
