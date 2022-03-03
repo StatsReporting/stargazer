@@ -108,7 +108,7 @@ class Stargazer:
         self.custom_notes = []
         self.show_stars = True
         self.table_label = None
-        self.latex_text_size = ""
+        self.custom_latex_code = ""
 
     def extract_data(self):
         """
@@ -275,12 +275,12 @@ class Stargazer:
         assert type(append) == bool, 'Please input True/False'
         self.notes_append = append
 
-    def latex_size(self, size):
-        latex_sizes = [ "tiny", "scriptsize", "footnotesize", "small", "normalsize",
-                        "large", "Large", "LARGE", "huge", "Huge" ]
-        assert type(size) == str, "Please input a string argument for latex text size among:\n"+str(latex_sizes)
-        assert size in latex_sizes, "Please input a valid latex text size among the following:\n"+str(latex_sizes)
-        self.latex_text_size = size
+    def add_custom_latex_code(self, code):
+        assert type(code) in [ list, str ], "Please input custom latex code as a string or list of strings"
+        if type(code) == list:
+            assert sum([int(type(n) != str) for n in code]) == 0, "Custom latex code must be strings"
+            code = " ".join( code )
+        self.custom_latex_code += code
 
     def render_html(self, *args, **kwargs):
         return HTMLRenderer(self).render(*args, **kwargs)
@@ -303,6 +303,12 @@ class Stargazer:
             The LaTeX code.
         """
         return LaTeXRenderer(self, escape=escape).render(*args, **kwargs)
+
+    def set_font_size( self, size ):
+        if type( size ) == str:
+            size = size if size[0]=="\\" else "\\"+size
+            self.add_custom_latex_code = size + self.add_custom_latex_code
+    
 
 
 class Renderer:
@@ -645,8 +651,7 @@ class LaTeXRenderer(Renderer):
     def generate_header(self, only_tabular=False):
         header = ''
         if not only_tabular:
-            size = "" if self.latex_text_size == "" else "\\"+self.latex_text_size
-            header += '\\begin{table}[!htbp] \\centering ' + size + ' \n'
+            header += '\\begin{table}[!htbp] \\centering ' + self.custom_latex_code + ' \n'
             if not self.show_header:
                 return header
 
