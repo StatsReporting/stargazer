@@ -661,12 +661,12 @@ class LaTeXRenderer(Renderer):
 
         if self.column_labels is not None:
             if type(self.column_labels) == str:
-                header += '\\\\[-1.8ex] & \\multicolumn{' + str(self.num_models) + '}{c}{' + self.column_labels + '} \\\\'
+                header += '\\\\[-1.8ex] & \\multicolumn{' + str(self.num_models) + '}{c}{' + self._escape(self.column_labels) + '} \\\\'
             else:
                 header += '\\\\[-1.8ex] '
                 for i, label in enumerate(self.column_labels):
                     header += '& \\multicolumn{' + str(self.column_separators[i])
-                    header += '}{c}{' + label + '} '
+                    header += '}{c}{' + self._escape(label) + '} '
                 header += ' \\\\\n'
 
         if self.show_model_nums:
