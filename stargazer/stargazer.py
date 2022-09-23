@@ -96,6 +96,7 @@ class Stargazer:
         self.show_sig = True
         self.sig_levels = [0.1, 0.05, 0.01]
         self.sig_digits = 3
+        self.t_statistics = False
         self.confidence_intervals = False
         self.show_footer = True
         self.custom_lines = defaultdict(list)
@@ -141,6 +142,7 @@ class Stargazer:
         # For features that are simple attributes of "model", establish the
         # mapping with internal name (TODO: adopt same names?):
         statsmodels_map = {'p_values' : 'pvalues',
+                           't_values' : 'tvalues',
                            'cov_values' : 'params',
                            'cov_std_err' : 'bse',
                            'r2' : 'rsquared',
@@ -215,6 +217,10 @@ class Stargazer:
         assert type(digits) == int, 'The number of significant digits must be an int'
         assert digits < 10, 'Whoa hold on there bud, maybe use fewer digits'
         self.sig_digits = digits
+
+    def show_t_statistics(self, show):
+        assert type(show) == bool, 'Please input True/False'
+        self.t_statistics = show
 
     def show_confidence_intervals(self, show):
         assert type(show) == bool, 'Please input True/False'
@@ -510,13 +516,15 @@ class HTMLRenderer(Renderer):
         cov_text = f'<tr><td style="text-align:left{space_style}"></td>'
         for md in self.model_data:
             if cov_name in md['cov_names']:
-                cov_text += f'<td{spacing}>('
-                if self.confidence_intervals:
-                    cov_text += self._float_format(md['conf_int_low_values'][cov_name]) + ' , '
-                    cov_text += self._float_format(md['conf_int_high_values'][cov_name])
+                cov_text += f'<td{spacing}>'
+                if self.t_statistics:
+                    cov_text += f"t={self._float_format(md['t_values'][cov_name])}"
+                elif self.confidence_intervals:
+                    cov_text += '(' + self._float_format(md['conf_int_low_values'][cov_name]) + ' , '
+                    cov_text += self._float_format(md['conf_int_high_values'][cov_name]) + ')'
                 else:
-                    cov_text += self._float_format(md['cov_std_err'][cov_name])
-                cov_text += ')</td>'
+                    cov_text += '(' + self._float_format(md['cov_std_err'][cov_name]) + ')'
+                cov_text += '</td>'
             else:
                 cov_text += f'<td{spacing}></td>'
         cov_text += '</tr>\n'
