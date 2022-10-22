@@ -194,14 +194,29 @@ class Stargazer:
         self.show_model_nums = show
 
     def custom_columns(self, labels, separators=None):
-        if separators is not None:
-            assert type(labels) == list, 'Please input a list of labels or a single label string'
-            assert type(separators) == list, 'Please input a list of column separators'
-            assert len(labels) == len(separators), 'Number of labels must match number of columns'
-            assert sum([int(type(s) != int) for s in separators]) == 0, 'Columns must be ints'
-            assert sum(separators) == self.num_models, 'Please set number of columns to number of models'
+        """
+        "labels": list of labels, or single label string.
+        "separators" (optional): list of integers, of same length of "labels",
+        indicating how many columns each header covers (default is 1).
+        """
+        if isinstance(labels, list):
+            if separators is None:
+                assert(len(labels) == self.num_models), ('If separators are '
+                'not provided, custom headers must be the same number as '
+                'models,')
+                separators = [1] * self.num_models
+            else:
+                assert type(separators) == list, ('Please input a list of '
+                                                  'column separators.')
+                assert len(labels) == len(separators), ('Number of labels '
+                                               'must match number of columns.')
+                assert(all(isinstance(s, int) for s in separators)), ('Column '
+                                                   'numbers must be integers.')
+                assert sum(separators) == self.num_models, ('Please set total '
+                                      'number of columns to number of models.')
         else:
-            assert type(labels) == str, 'Please input a single string label if no columns specified'
+            assert isinstance(labels, str), ('Please input a single string '
+                                             'label, or a list of strings.')
 
         self.column_labels = labels
         self.column_separators = separators
