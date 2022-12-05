@@ -237,7 +237,7 @@ class Stargazer:
 
     def dependent_variable_name(self, name):
         assert type(name) == str, 'Please input a string to use as the depedent variable name'
-        self.dep_var_name = name
+        self.dependent_variable = name
 
     def covariate_order(self, cov_names):
         missing = set(cov_names).difference(set(self.cov_names))
