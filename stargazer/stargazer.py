@@ -22,6 +22,8 @@ import numbers
 import pandas as pd
 
 class LineLocation(Enum):
+    HEADER_TOP = 'ht'
+    HEADER_BOTTOM = 'hb'
     BODY_TOP = 'bt'
     BODY_BOTTOM = 'bb'
     FOOTER_TOP = 'ft'
@@ -434,6 +436,8 @@ class HTMLRenderer(Renderer):
 
         header += '<table style="text-align:center"><tr><td colspan="'
         header += str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
+        header += self.generate_custom_lines(LineLocation.HEADER_TOP)
+
         if self.dep_var_name is not None:
             header += '<tr><td style="text-align:left"></td><td colspan="' + str(self.num_models)
             header += '"><em>' + self.dep_var_name + self.dependent_variable + '</em></td></tr>'
@@ -456,6 +460,8 @@ class HTMLRenderer(Renderer):
             for num in range(1, self.num_models + 1):
                 header += '<td>(' + str(num) + ')</td>'
             header += '</tr>'
+
+        header += self.generate_custom_lines(LineLocation.HEADER_BOTTOM)
 
         header += '<tr><td colspan="' + str(self.num_models + 1)
         header += '" style="border-bottom: 1px solid black"></td></tr>\n'
@@ -669,6 +675,8 @@ class LaTeXRenderer(Renderer):
         header += '\\begin{tabular}{@{\\extracolsep{5pt}}l' + content_columns + '}\n'
         header += '\\\\[-1.8ex]\\hline\n'
         header += '\\hline \\\\[-1.8ex]\n'
+        header += self.generate_custom_lines(LineLocation.HEADER_TOP)
+
         if self.dep_var_name is not None:
             header += '& \\multicolumn{' + str(self.num_models) + '}{c}'
             header += '{\\textit{' + self.dep_var_name + self.dependent_variable + '}} \\\n'
@@ -689,6 +697,8 @@ class LaTeXRenderer(Renderer):
             for num in range(1, self.num_models + 1):
                 header += '& (' + str(num) + ') '
             header += '\\\\\n'
+
+        header += self.generate_custom_lines(LineLocation.HEADER_BOTTOM)
 
         header += '\\hline \\\\[-1.8ex]\n'
 
