@@ -61,6 +61,13 @@ est2 = sm.OLS(endog=df['target'], exog=sm.add_constant(df[df.columns[0:6]])).fit
 stargazer = Stargazer([est, est2])
 ```
 
+### Remove degrees of freedom
+There is an option to remove the degrees of free from the table:
+
+```python
+stargazer_sum.show_dof = False
+```
+
 ### HTML Example
 
 ```python
@@ -95,3 +102,15 @@ stargazer.render_latex()
 ```
 
 ![](https://raw.githubusercontent.com/mwburke/stargazer/master/latex_example.png)
+
+You can remove the \begin{table} ... \end{table} as follows:
+
+```python
+stargazer.render_latex(only_tabular = True)
+```
+
+You can escape special characters in variables names as follows:
+
+```python
+stargazer.render_latex(escape = True)
+```
