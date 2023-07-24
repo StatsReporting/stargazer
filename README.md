@@ -16,7 +16,7 @@ It depends on `statsmodels`, which in turn depends on several other libraries li
 
 ## Editing Features
 
-This library implements many of the customization features found in the original package. Examples of most can be found [in the examples jupyter notebook](https://github.com/mwburke/stargazer/blob/master/examples.ipynb) and a full list of the methods/features is here below:
+This library implements many of the customization features found in the original package. Examples of most can be found [in the examples jupyter notebook](https://github.com/StatsReporting/stargazer/blob/master/examples.ipynb) and a full list of the methods/features is here below:
 
 * `title`: custom title
 * `show_header`: display or hide model header data
@@ -94,4 +94,4 @@ stargazer.render_html()
 stargazer.render_latex()
 ```
 
-![](https://raw.githubusercontent.com/mwburke/stargazer/master/latex_example.png)
+![](https://raw.githubusercontent.com/StatsReporting/stargazer/master/latex_example.png)

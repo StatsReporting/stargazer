@@ -11,7 +11,7 @@ setuptools.setup(
     description="Nicely formatted regression reporting",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/mwburke/stargazer",
+    url="https://github.com/StatsReporting/stargazer",
     packages=setuptools.find_packages(),
     license='GPLv2',
     classifiers=(
