@@ -5,9 +5,9 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="stargazer",
-    version="0.0.5",
-    author="Matthew Burke",
-    author_email="matthew.wesley.burke@gmail.com",
+    version="0.0.6",
+    author="Pietro Battiston, Matthew Burke",
+    author_email="me@pietrobattiston.it, matthew.wesley.burke@gmail.com",
     description="Nicely formatted regression reporting",
     long_description=long_description,
     long_description_content_type="text/markdown",
