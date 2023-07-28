@@ -21,6 +21,8 @@ from enum import Enum
 import numbers
 import pandas as pd
 
+from .utils import Label
+
 class LineLocation(Enum):
     HEADER_TOP = 'ht'
     HEADER_BOTTOM = 'hb'
@@ -28,7 +30,6 @@ class LineLocation(Enum):
     BODY_BOTTOM = 'bb'
     FOOTER_TOP = 'ft'
     FOOTER_BOTTOM = 'fb'
-
 
 class Stargazer:
     """
@@ -40,15 +41,26 @@ class Stargazer:
     and then render the results in either HTML or LaTeX.
     """
 
-    # This is a mapping from 'show_*' attribute to name of generating method
-    # "_generate_{LABEL}" (if present) and to name of stat in data store
-    # otherwise.
+    # The following tuple represents a mapping from 'show_*' attribute to
+    # - name of generating method "_generate_{LABEL}" (if present) and
+    #   name of stat in data store otherwise.
+    # - label, in the form of a str or a Label
     # Stats will be automatically formatted. Order matters!
-    _auto_stats = [('n', 'nobs'),
-                   ('r2', 'r2'),
-                   ('adj_r2', 'r2_adj'),
-                   ('residual_std_err', 'resid_std_err'),
-                   ('f_statistic', 'f_statistic')]
+
+    _auto_stats = [('n', 'nobs', 'Observations'),
+
+                   ('r2', 'r2',
+                    Label({'LaTeX' : '$R^2$',
+                           'html' : 'R<sup>2</sup>'})),
+
+                   ('adj_r2', 'r2_adj',
+                    Label({'LaTeX' : 'Adjusted $R^2$',
+                           'html' : 'Adjusted R<sup>2</sup>'})),
+
+                   ('residual_std_err', 'resid_std_err',
+                    'Residual Std. Error'),
+
+                   ('f_statistic', 'f_statistic', 'F Statistic')]
 
     def __init__(self, models):
         self.models = models
@@ -295,7 +307,8 @@ class Stargazer:
         self.notes_append = append
 
     def render_html(self, *args, **kwargs):
-        return HTMLRenderer(self).render(*args, **kwargs)
+        with Label.context('html'):
+            return HTMLRenderer(self).render(*args, **kwargs)
 
     def _repr_html_(self):
         return self.render_html()
@@ -314,7 +327,8 @@ class Stargazer:
         str
             The LaTeX code.
         """
-        return LaTeXRenderer(self, escape=escape).render(*args, **kwargs)
+        with Label.context('LaTeX'):
+            return LaTeXRenderer(self, escape=escape).render(*args, **kwargs)
 
 
 class Renderer:
@@ -412,13 +426,6 @@ class Renderer:
 
 class HTMLRenderer(Renderer):
     fmt = 'html'
-
-    # Labels for stats in Stargazer._auto_stats:
-    _stats_labels = {'n' : 'Observations',
-                     'r2' : 'R<sup>2</sup>',
-                     'adj_r2' : 'Adjusted R<sup>2</sup>',
-                     'residual_std_err' : 'Residual Std. Error',
-                     'f_statistic' : 'F Statistic'}
 
     def render(self):
         html = self.generate_header()
@@ -555,9 +562,9 @@ class HTMLRenderer(Renderer):
             return footer
         footer += self.generate_custom_lines(LineLocation.FOOTER_TOP)
 
-        for attr, stat in Stargazer._auto_stats:
+        for attr, stat, label in Stargazer._auto_stats:
             if getattr(self, f'show_{attr}'):
-                footer += self.generate_stat(stat, self._stats_labels[attr])
+                footer += self.generate_stat(stat, label)
 
         footer += self.generate_custom_lines(LineLocation.FOOTER_BOTTOM)
         footer += '<tr><td colspan="' + str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
@@ -622,13 +629,6 @@ class HTMLRenderer(Renderer):
 
 class LaTeXRenderer(Renderer):
     fmt = 'LaTeX'
-
-    # Labels for stats in Stargazer._auto_stats:
-    _stats_labels = {'n' : 'Observations',
-                     'r2' : '$R^2$',
-                     'adj_r2' : 'Adjusted $R^2$',
-                     'residual_std_err' : 'Residual Std. Error',
-                     'f_statistic' : 'F Statistic'}
 
     # LaTeX escape characters, borrowed from pandas.io.formats.latex
     _ESCAPE_CHARS = [
@@ -790,9 +790,9 @@ class LaTeXRenderer(Renderer):
             return footer
         footer += self.generate_custom_lines(LineLocation.FOOTER_TOP)
 
-        for attr, stat in Stargazer._auto_stats:
+        for attr, stat, label in Stargazer._auto_stats:
             if getattr(self, f'show_{attr}'):
-                footer += self.generate_stat(stat, self._stats_labels[attr])
+                footer += self.generate_stat(stat, label)
 
         footer += self.generate_custom_lines(LineLocation.FOOTER_BOTTOM)
         footer += '\\hline\n\\hline \\\\[-1.8ex]\n'

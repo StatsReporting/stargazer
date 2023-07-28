@@ -36,3 +36,57 @@ class LogitOdds(Wrapper):
     @property
     def params(self):
         return np.exp(self._base.params)
+
+
+class _LabelContext:
+    """
+    A context manager determining what format any Label must be rendered in.
+    """
+
+    def __init__(self, fmt):
+        """
+        Store format for context execution.
+        """
+
+        self._fmt = fmt
+
+    def __enter__(self):
+        """
+        Overwrite __repr__ as to use the chosen format.
+        """
+
+        self._orig = Label.__repr__
+        Label.__repr__ = lambda l : l._versions[self._fmt]
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        """
+        Restore the original __repr__.
+        """
+
+        Label.__repr__ = self._orig
+
+
+class Label:
+    """
+    A string (including possible placeholders) that can be represented in
+    different formats.
+    Formats can be set by using Label.context, as in
+
+    with Label.context('html'):
+        ...
+    """
+    context = _LabelContext
+
+    def __init__(self, label):
+        if isinstance(label, dict):
+            self._versions = label
+
+            # A default is required:
+            if not None in label:
+                # If not provided, pick the first:
+                label[None] = label[list(label)[0]]
+        else:
+            self._versions = {None : label}
+
+    def __repr__(self):
+        return self._versions[None]
