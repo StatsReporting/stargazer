@@ -654,7 +654,14 @@ class LaTeXRenderer(Renderer):
     ]
 
     def _escape(self, text):
-        """Escape LaTeX special characters"""
+        """
+        Escape LaTeX special characters
+        """
+
+        if isinstance(text, Label) and text.specific():
+            # Do _not_ escape characters of a LaTeX-specific string:
+            return text
+
         if self.kwargs.get('escape', False):
             for orig_char, escape_char in LaTeXRenderer._ESCAPE_CHARS:
                 text = text.replace(orig_char, escape_char)
@@ -758,7 +765,7 @@ class LaTeXRenderer(Renderer):
             if cov_name in self.cov_map:
                 cov_print_name = self.cov_map[cov_name]
 
-        cov_text = ' ' + self._escape(cov_print_name) + ' '
+        cov_text = f' {self._escape(cov_print_name)} '
         for md in self.model_data:
             if cov_name in md['cov_names']:
                 cov_text += '& ' + self._float_format(md['cov_values'][cov_name])
