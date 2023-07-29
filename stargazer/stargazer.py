@@ -23,6 +23,7 @@ import pandas as pd
 
 from .utils import Label
 
+
 class LineLocation(Enum):
     HEADER_TOP = 'ht'
     HEADER_BOTTOM = 'hb'
@@ -46,6 +47,8 @@ class Stargazer:
     #   name of stat in data store otherwise.
     # - label, in the form of a str or a Label
     # Stats will be automatically formatted. Order matters!
+    # Note that a stat is automatically hidden if none of the models displayed
+    # has it.
 
     _auto_stats = [('n', 'nobs', 'Observations'),
 
@@ -56,6 +59,10 @@ class Stargazer:
                    ('adj_r2', 'r2_adj',
                     Label({'LaTeX' : 'Adjusted $R^2$',
                            'html' : 'Adjusted R<sup>2</sup>'})),
+
+                   ('pseudo_r2', 'pseudo_r2',
+                    Label({'LaTeX' : 'Pseudo $R^2$',
+                           'html' : 'Pseudo R<sup>2</sup>'})),
 
                    ('residual_std_err', 'resid_std_err',
                     'Residual Std. Error'),
@@ -116,6 +123,7 @@ class Stargazer:
         self.show_n = True
         self.show_r2 = True
         self.show_adj_r2 = True
+        self.show_pseudo_r2 = True
         self.show_residual_std_err = True
         self.show_f_statistic = True
         self.show_dof = True
@@ -159,6 +167,7 @@ class Stargazer:
                            'cov_std_err' : 'bse',
                            'r2' : 'rsquared',
                            'r2_adj' : 'rsquared_adj',
+                           'pseudo_r2' : 'prsquared',
                            'f_p_value' : 'f_pvalue',
                            'degree_freedom' : 'df_model',
                            'degree_freedom_resid' : 'df_resid',
