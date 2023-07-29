@@ -52,18 +52,32 @@ class _LabelContext:
 
     def __enter__(self):
         """
-        Overwrite __repr__ as to use the chosen format.
+        Overwrite Label methods as to use the chosen format.
         """
 
-        self._orig = Label.__repr__
-        Label.__repr__ = lambda l : l._versions[self._fmt]
+        self._orig = {param : getattr(Label, param)
+                      for param in ['__repr__', 'specific']}
+
+        Label.__repr__ = lambda l : l._versions.get(self._fmt,
+                                                    l._versions[None])
+
+        def specific(label):
+            """
+            Return a bool indicating whether the passed "label" has a specific
+            version for the currently used format.
+            """
+
+            return self._fmt in label._versions
+
+        Label.specific = specific
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         """
-        Restore the original __repr__.
+        Restore the original Label methods.
         """
 
-        Label.__repr__ = self._orig
+        Label.__repr__, Label.specific = [self._orig[param] for param in
+                                          ['__repr__', 'specific']]
 
 
 class Label:
@@ -87,6 +101,17 @@ class Label:
                 label[None] = label[list(label)[0]]
         else:
             self._versions = {None : label}
+
+    def specific(self):
+        """
+        To be used only within a Label.context.
+        """
+
+        raise ValueError("specific() can only be called within a "
+                         "Label.context")
+
+    def __getattr__(self, attr):
+        return getattr(str(self), attr)
 
     def __repr__(self):
         return self._versions[None]
