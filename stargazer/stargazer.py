@@ -330,6 +330,11 @@ class Stargazer:
         ----------
         escape : bool
             Escape special characters.
+            To prevent a specific string from being escaped, just pass it as
+
+                Label({'LaTeX' : 'the_string'})
+
+            ... it will be left unchanged.
 
         Returns
         -------
