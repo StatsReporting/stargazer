@@ -21,7 +21,7 @@ from enum import Enum
 import numbers
 import pandas as pd
 
-from .utils import Label
+from .label import Label
 
 
 class LineLocation(Enum):
