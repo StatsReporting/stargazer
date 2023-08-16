@@ -1,5 +1,6 @@
 from statsmodels.base.wrapper import ResultsWrapper
 import numpy as np
+import pandas as pd
 
 class Wrapper(ResultsWrapper):
     """
@@ -37,4 +38,21 @@ class LogitOdds(Wrapper):
     def params(self):
         return np.exp(self._base.params)
 
+
+class MarginalEffects(Wrapper):
+    """
+    Feature marginal effects, computed with "get_margeff".
+    """
+
+    def __init__(self, base):
+        Wrapper.__init__(self, base)
+        marg_est = self._base.get_margeff()
+        # Omit the constant:
+        index = self._base.params.index[1:]
+
+        for k, a in (('params', 'margeff'),
+                     ('pvalues', 'pvalues'),
+                     ('bse', 'margeff_se')):
+            s = pd.Series(getattr(marg_est, a), index=index)
+            setattr(self, k, s)
 
