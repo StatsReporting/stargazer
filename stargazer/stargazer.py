@@ -112,7 +112,7 @@ class Stargazer:
         self.column_separators = None
         self.show_model_nums = True
         self.original_cov_names = None
-        self.cov_map = None
+        self.cov_map = lambda x : x
         self.cov_spacing = None
         self.show_precision = True
         self.show_sig = True
@@ -271,8 +271,15 @@ class Stargazer:
         self.cov_names = cov_names
 
     def rename_covariates(self, cov_map):
-        assert isinstance(cov_map, dict), 'Please input a dictionary with covariate names as keys'
-        self.cov_map = cov_map
+        if hasattr(cov_map, "get"):
+            self.cov_map = lambda k : cov_map.get(k, k)
+        elif callable(cov_map):
+            self.cov_map = cov_map
+        else:
+            msg = ('"rename_covariates" must receive either a dictionary with '
+                   'covariate names as keys, or a function accepting any '
+                   'covariate name as input and returning the new name.')
+            raise ValueError(msg)
 
     def reset_covariate_order(self):
         if self.original_cov_names is not None:
@@ -527,9 +534,8 @@ class HTMLRenderer(Renderer):
         return cov_text
 
     def generate_cov_main(self, cov_name, spacing):
-        cov_print_name = cov_name
-        if self.cov_map is not None:
-            cov_print_name = self.cov_map.get(cov_print_name, cov_name)
+        cov_print_name = self.cov_map(cov_name)
+
         cov_text = (f'<tr><td style="text-align:left">'
                     f'{cov_print_name}</td>')
         for md in self.model_data:
@@ -765,11 +771,7 @@ class LaTeXRenderer(Renderer):
         return cov_text
 
     def generate_cov_main(self, cov_name):
-        cov_print_name = cov_name
-
-        if self.cov_map is not None:
-            if cov_name in self.cov_map:
-                cov_print_name = self.cov_map[cov_name]
+        cov_print_name = self.cov_map(cov_name)
 
         cov_text = f' {self._escape(cov_print_name)} '
         for md in self.model_data:
