@@ -88,7 +88,7 @@ class Stargazer:
             if not isinstance(m, (ResultsWrapper,
                                   RegressionResults)):
                 raise ValueError('Please use trained OLS models as inputs, '
-                                 'not {m.__class__}')
+                                 f'not {m.__class__}')
             targets.append(m.model.endog_names)
 
         if targets.count(targets[0]) != len(targets):
