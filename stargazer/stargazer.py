@@ -13,9 +13,6 @@ https://CRAN.R-project.org/package=stargazer
         github.com/mwburke
 """
 
-from statsmodels.base.wrapper import ResultsWrapper
-from statsmodels.regression.linear_model import RegressionResults
-from math import sqrt
 from collections import defaultdict
 from enum import Enum
 import numbers
@@ -23,6 +20,9 @@ import pandas as pd
 
 from .label import Label
 
+RESULTS_CLASSES = {}
+
+from .translators import *
 
 class LineLocation(Enum):
     HEADER_TOP = 'ht'
@@ -34,8 +34,8 @@ class LineLocation(Enum):
 
 class Stargazer:
     """
-    Class that is constructed with one or more trained
-    OLS models from the statsmodels package.
+    Class that is constructed with one or more trained statistical models, for
+    instance from the statsmodels package.
 
     The user then can change the rendering options by
     chaining different methods to the Stargazer object
@@ -82,13 +82,17 @@ class Stargazer:
 
         Any future checking will be added here.
         """
+
         targets = []
 
         for m in self.models:
-            if not isinstance(m, (ResultsWrapper,
-                                  RegressionResults)):
-                raise ValueError('Please use trained OLS models as inputs, '
-                                 f'not {m.__class__}')
+            found = False
+            for klass in m.__class__.__mro__:
+                if klass in RESULTS_CLASSES:
+                    found = True
+                    break
+            if not found:
+                raise ValueError('Result type {m.__class__} not recognized.')
             targets.append(m.model.endog_names)
 
         if targets.count(targets[0]) != len(targets):
@@ -151,59 +155,19 @@ class Stargazer:
             covs = covs + list(md['cov_names'])
         self.cov_names = sorted(set(covs))
 
-    def _extract_feature(self, obj, feature):
-        """
-        Just return obj.feature if present and None otherwise.
-        """
-        try:
-            return getattr(obj, feature)
-        except AttributeError:
-            return None
-
     def extract_model_data(self, model):
-        # For features that are simple attributes of "model", establish the
-        # mapping with internal name (TODO: adopt same names?):
-        statsmodels_map = {'p_values' : 'pvalues',
-                           'cov_values' : 'params',
-                           'cov_std_err' : 'bse',
-                           'r2' : 'rsquared',
-                           'r2_adj' : 'rsquared_adj',
-                           'pseudo_r2' : 'prsquared',
-                           'f_p_value' : 'f_pvalue',
-                           'degree_freedom' : 'df_model',
-                           'degree_freedom_resid' : 'df_resid',
-                           'nobs' : 'nobs',
-                           'f_statistic' : 'fvalue'
-                           }
+        """
+        Call appropriate (library-specific) data extractor.
+        """
 
-        data = {}
-        for key, val in statsmodels_map.items():
-            data[key] = self._extract_feature(model, val)
+        # TODO: deduplicate from validate_input
+        for klass in model.__class__.__mro__:
+            if klass in RESULTS_CLASSES:
+                extractor = RESULTS_CLASSES[klass]
 
-        if isinstance(model, ResultsWrapper):
-            data['cov_names'] = model.params.index.values
-        else:
-            # Simple RegressionResults, for instance as a result of
-            # get_robustcov_results():
-            data['cov_names'] = model.model.data.orig_exog.columns
+                return extractor(model)
 
-            # These are simple arrays, not Series:
-            for what in 'cov_values', 'p_values', 'cov_std_err':
-                data[what] = pd.Series(data[what],
-                                       index=data['cov_names'])
-
-        data['conf_int_low_values'] = model.conf_int()[0]
-        data['conf_int_high_values'] = model.conf_int()[1]
-        data['resid_std_err'] = (sqrt(sum(model.resid**2) / model.df_resid)
-                                 if hasattr(model, 'resid') else None)
-
-        # Workaround for
-        # https://github.com/statsmodels/statsmodels/issues/6778:
-        if 'f_statistic' in data:
-            data['f_statistic'] = (lambda x : x[0, 0] if getattr(x, 'ndim', 0)
-                                   else x)(data['f_statistic'])
-
-        return data
+        return NotImplementedError(model.__class__)
 
     # Begin render option functions
     def title(self, title):
