@@ -33,6 +33,8 @@ def extract_model_data(model):
     for key, val in statsmodels_map.items():
         data[key] = _extract_feature(model, val)
 
+    data['dependent_variable'] = model.model.endog_names
+
     if isinstance(model, ResultsWrapper):
         data['cov_names'] = model.params.index.values
     else:

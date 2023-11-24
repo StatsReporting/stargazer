@@ -83,17 +83,7 @@ class Stargazer:
         Any future checking will be added here.
         """
 
-        targets = []
-
-        for m in self.models:
-            found = False
-            for klass in m.__class__.__mro__:
-                if klass in RESULTS_CLASSES:
-                    found = True
-                    break
-            if not found:
-                raise ValueError('Result type {m.__class__} not recognized.')
-            targets.append(m.model.endog_names)
+        targets = [mod['dependent_variable'] for mod in self.model_data]
 
         if targets.count(targets[0]) != len(targets):
             self.dependent_variable = ''
@@ -145,7 +135,6 @@ class Stargazer:
         for use or modification. They should not be able to
         be modified by any rendering parameters.
         """
-        self.validate_input()
         self.model_data = []
         for m in self.models:
             self.model_data.append(self.extract_model_data(m))
@@ -155,12 +144,13 @@ class Stargazer:
             covs = covs + list(md['cov_names'])
         self.cov_names = sorted(set(covs))
 
+        self.validate_input()
+
     def extract_model_data(self, model):
         """
         Call appropriate (library-specific) data extractor.
         """
 
-        # TODO: deduplicate from validate_input
         for klass in model.__class__.__mro__:
             if klass in RESULTS_CLASSES:
                 extractor = RESULTS_CLASSES[klass]
