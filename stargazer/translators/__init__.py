@@ -7,3 +7,5 @@ def register_class(klass, extractor):
 ### STATSMODELS ###
 from .statsmodels import classes
 
+### LINEARMODELS ###
+from .linearmodels import classes
