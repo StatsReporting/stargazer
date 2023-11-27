@@ -157,7 +157,7 @@ class Stargazer:
 
                 return extractor(model)
 
-        return NotImplementedError(model.__class__)
+        raise NotImplementedError(model.__class__)
 
     # Begin render option functions
     def title(self, title):
