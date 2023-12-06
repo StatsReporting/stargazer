@@ -217,10 +217,27 @@ class Stargazer:
         assert type(name) == str, 'Please input a string to use as the depedent variable name'
         self.dependent_variable = name
 
-    def covariate_order(self, cov_names):
+    def covariate_order(self, cov_names, restrict=True):
+        """
+        Specify order and subset of covariates.
+
+        Paramters
+        ---------
+        cov_names : list of str
+            Covariate names, or a subset of them, in the desired order.
+        restrict : bool, default True
+            Whether covariates not included in "cov_names" should be dropped;
+            otherwise, they are just appended, in their default order.
+        """
+
         missing = set(cov_names).difference(set(self.cov_names))
         assert not missing, ('Covariate order must contain subset of existing '
                              'covariates: {} are not.'.format(missing))
+
+        if not restrict:
+            others = [name for name in self.cov_names if name not in cov_names]
+            cov_names += others
+
         self.original_cov_names = self.cov_names
         self.cov_names = cov_names
 
