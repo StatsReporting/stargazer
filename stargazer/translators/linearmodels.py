@@ -6,7 +6,6 @@ from math import sqrt
 
 from ..starlib import _extract_feature
 
-from statsmodels.base.wrapper import ResultsWrapper
 from linearmodels.panel.results import PanelEffectsResults, RandomEffectsResults, PanelResults
 
 from . import register_class

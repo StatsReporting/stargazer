@@ -8,4 +8,8 @@ def register_class(klass, extractor):
 from .statsmodels import classes
 
 ### LINEARMODELS ###
-from .linearmodels import classes
+try:
+    from .linearmodels import classes
+except ModuleNotFoundError:
+    # linearmodels not found
+    pass
