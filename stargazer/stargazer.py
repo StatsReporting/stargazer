@@ -677,9 +677,10 @@ class LaTeXRenderer(Renderer):
         header += self.generate_custom_lines(LineLocation.HEADER_TOP)
 
         if self.dep_var_name is not None:
-            header += '& \\multicolumn{' + str(self.num_models) + '}{c}'
-            header += '{\\textit{' + self.dep_var_name + self.dependent_variable + '}} \\\n'
-            header += '\\cr \\cline{2-' + str(self.num_models + 1) + '}\n'
+            header += (f'& \\multicolumn{{{self.num_models}}}{{c}}'
+                       f'{{\\textit{{{self.dep_var_name}'
+                       f'{self._escape(self.dependent_variable)}}}}} \\\n'
+                       f'\\cr \\cline{{2-{self.num_models + 1}}}\n')
 
         if self.column_labels is not None:
             if type(self.column_labels) == str:
