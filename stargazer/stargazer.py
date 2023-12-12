@@ -52,6 +52,8 @@ class Stargazer:
 
     _auto_stats = [('n', 'nobs', 'Observations'),
 
+                   ('ngroups', 'ngroups', 'N. of groups'),
+
                    ('r2', 'r2',
                     Label({'LaTeX' : '$R^2$',
                            'html' : 'R<sup>2</sup>'})),
@@ -116,6 +118,7 @@ class Stargazer:
         self.show_footer = True
         self.custom_lines = defaultdict(list)
         self.show_n = True
+        self.show_ngroups = True
         self.show_r2 = True
         self.show_adj_r2 = True
         self.show_pseudo_r2 = True
@@ -415,7 +418,7 @@ class Renderer:
             generator = getattr(self, f'_generate_{stat}')
             return [generator(md) for md in self.model_data]
         else:
-            return [md[stat] for md in self.model_data]
+            return [md.get(stat, None) for md in self.model_data]
 
 class HTMLRenderer(Renderer):
     fmt = 'html'
