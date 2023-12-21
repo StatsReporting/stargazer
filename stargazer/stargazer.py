@@ -58,6 +58,10 @@ class Stargazer:
                     Label({'LaTeX' : '$R^2$',
                            'html' : 'R<sup>2</sup>'})),
 
+                   ('within_r2', 'within_r2',
+                    Label({'LaTeX' : 'Within $R^2$',
+                           'html' : 'Within R<sup>2</sup>'})),
+
                    ('adj_r2', 'r2_adj',
                     Label({'LaTeX' : 'Adjusted $R^2$',
                            'html' : 'Adjusted R<sup>2</sup>'})),
@@ -120,6 +124,8 @@ class Stargazer:
         self.show_n = True
         self.show_ngroups = True
         self.show_r2 = True
+        # Off by default, as discussed in GH #98:
+        self.show_within_r2 = False
         self.show_adj_r2 = True
         self.show_pseudo_r2 = True
         self.show_residual_std_err = True
