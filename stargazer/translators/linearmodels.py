@@ -11,7 +11,7 @@ from linearmodels.panel.results import (
     RandomEffectsResults,
 )
 
-from ..starlib import _extract_feature
+from ..starlib import _extract_feature, _merge_dicts
 from . import register_class
 
 # For features that are simple attributes of "model", establish the
@@ -37,13 +37,6 @@ linear_model_map_panel = {
 
 # IV specific statistics map
 linear_model_map_iv = dict()
-
-
-def _merge_dicts(*dicts):
-    merged = {}
-    for d in dicts:
-        merged.update(d)
-    return merged
 
 
 def extract_model_data(model):
