@@ -13,6 +13,7 @@ def _extract_feature(obj, feature):
         return None
 
 
+# Unneeded as soon as we drop support for Python 3.8 - Python 3.9 has d1 | d2:
 def _merge_dicts(*dicts):
     merged = {}
     for d in dicts:
