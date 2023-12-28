@@ -77,10 +77,9 @@ class Stargazer:
 
     def __init__(self, models):
         self.models = models
-        self.num_models = len(models)
+        self.num_models = self.new_len()
         self.reset_params()
         self.extract_data()
-
     def validate_input(self):
         """
         Check inputs to see if they are going to
@@ -96,6 +95,16 @@ class Stargazer:
             self.dep_var_name = None
         else:
             self.dependent_variable = targets[0]
+
+    def new_len(self):
+        """
+        Adding a more informative warning when user don't enter a single model as a list
+        """
+        if isinstance(self.models,list):
+            return len(self.models)
+        else:
+            raise ValueError('Models must be a list')
+
 
     def reset_params(self):
         """
