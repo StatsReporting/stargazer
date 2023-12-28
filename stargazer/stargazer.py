@@ -137,6 +137,8 @@ class Stargazer:
         self.custom_notes = []
         self.show_stars = True
         self.table_label = None
+        self.custom_latex_code = ""
+        self.font_size = 100
 
     def extract_data(self):
         """
@@ -303,6 +305,13 @@ class Stargazer:
         assert type(append) == bool, 'Please input True/False'
         self.notes_append = append
 
+    def add_custom_latex_code(self, code):
+        assert type(code) in [ list, str ], "Please input custom latex code as a string or list of strings"
+        if type(code) == list:
+            assert sum([int(type(n) != str) for n in code]) == 0, "Custom latex code must be strings"
+            code = " ".join( code )
+        self.custom_latex_code += code
+
     def render_html(self, *args, **kwargs):
         with Label.context('html'):
             return HTMLRenderer(self).render(*args, **kwargs)
@@ -331,6 +340,15 @@ class Stargazer:
         """
         with Label.context('LaTeX'):
             return LaTeXRenderer(self, escape=escape).render(*args, **kwargs)
+
+    def set_font_size( self, size ):
+        if type( size ) == str:
+            size = size if size[0]=="\\" else "\\"+size
+            self.add_custom_latex_code = size + self.add_custom_latex_code
+        if type( size ) in [ int,float ]:
+            self.font_size = size
+        else:
+            assert False, "Please input font size as a string (for latex sizes) or a number for scaling (default=100)"
 
 
 class Renderer:
@@ -443,7 +461,7 @@ class HTMLRenderer(Renderer):
         if self.title_text is not None:
             header += self.title_text + '<br>'
 
-        header += '<table style="text-align:center"><tr><td colspan="'
+        header += '<table style="text-align:center; font-size:{0}%"><tr><td colspan="'.format( str(self.font_size) )
         header += str(self.num_models + 1) + '" style="border-bottom: 1px solid black"></td></tr>'
         header += self.generate_custom_lines(LineLocation.HEADER_TOP)
 
@@ -669,7 +687,7 @@ class LaTeXRenderer(Renderer):
     def generate_header(self, only_tabular=False):
         header = ''
         if not only_tabular:
-            header += '\\begin{table}[!htbp] \\centering\n'
+            header += '\\begin{table}[!htbp] \\centering ' + self.custom_latex_code + ' \n'
             if not self.show_header:
                 return header
 
