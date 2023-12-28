@@ -680,7 +680,7 @@ class LaTeXRenderer(Renderer):
                 header += '  \\label{' + self.table_label + '}\n'
 
         content_columns = 'c' * self.num_models
-        header += '\\begin{tabular}{@{\\extracolsep{5pt}}l' + content_columns + '}\n'
+        header += '\\begin{tabular}{ll' + content_columns + '}\n'
         header += '\\\\[-1.8ex]\\hline\n'
         header += '\\hline \\\\[-1.8ex]\n'
         header += self.generate_custom_lines(LineLocation.HEADER_TOP)
