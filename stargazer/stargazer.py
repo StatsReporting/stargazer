@@ -151,7 +151,12 @@ class Stargazer:
         covs = []
         for md in self.model_data:
             covs = covs + list(md['cov_names'])
-        self.cov_names = sorted(set(covs))
+        # Drop duplicates but keep order of first appearance
+        self.cov_names = []
+        [self.cov_names.append(x) for x in covs if x not in self.cov_names]
+        #  Move constant/Intercept to the end of the list 
+        const = ['Intercept', 'const']
+        self.cov_names = [x for x in self.cov_names if x not in const] + [x for x in self.cov_names if x in const]
 
         self.validate_input()
 
