@@ -151,7 +151,12 @@ class Stargazer:
         covs = []
         for md in self.model_data:
             covs = covs + list(md['cov_names'])
-        self.cov_names = sorted(set(covs))
+        # Drop duplicates but keep order of first appearance
+        self.cov_names = []
+        [self.cov_names.append(x) for x in covs if x not in self.cov_names]
+        #  Move constant/Intercept to the end of the list 
+        const = ['Intercept', 'const']
+        self.cov_names = [x for x in self.cov_names if x not in const] + [x for x in self.cov_names if x in const]
 
         self.validate_input()
 
@@ -250,8 +255,22 @@ class Stargazer:
         self.original_cov_names = self.cov_names
         self.cov_names = cov_names
 
-    def rename_covariates(self, cov_map):
+    def rename_covariates(self, cov_map, 
+                          formula=False, 
+                          interaction = Label({'html' : ' &#215; ', 'LaTeX' : ' $\\times$ '})):
+        
+        def _formatInteraction(cov, fmt):
+            with Label.context(fmt):
+                return interaction.join([str(cov_map.get(k, k)) for k in cov.split(":")])
+
         if hasattr(cov_map, "get"):
+            if formula:
+                # Rename interaction terms generated from formula: add respective items to the cov_map dictionary
+                # that combine the names of the interacted variables & link with interaction symbol  
+                for cov in self.cov_names:
+                    if ":" in cov:
+                        cov_map[cov]= Label({'html' : _formatInteraction(cov, 'html'),
+                                             'LaTeX' : _formatInteraction(cov, 'LaTeX')})
             self.cov_map = lambda k : cov_map.get(k, k)
         elif callable(cov_map):
             self.cov_map = cov_map
