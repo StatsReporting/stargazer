@@ -62,7 +62,7 @@ def extract_model_data(model):
     data["cov_names"] = model.params.index.values
     data["conf_int_low_values"] = model.conf_int().lower
     data["conf_int_high_values"] = model.conf_int().upper
-    data["resid_std_err"] = sqrt(model.model_ss / model.df_resid)
+    data["resid_std_err"] = sqrt(model.s2)
     data["f_statistic"] = model.f_statistic.stat
     data["f_p_value"] = model.f_statistic.pval
     data["r2_adj"] = None
