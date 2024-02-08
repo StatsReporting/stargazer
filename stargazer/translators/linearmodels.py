@@ -2,7 +2,7 @@
 Compatibility layer with results from linearmodels.
 """
 
-from math import sqrt
+from math import nan, sqrt
 
 from linearmodels.iv.results import IVResults, OLSResults
 from linearmodels.panel.results import (
@@ -39,6 +39,17 @@ linear_model_map_panel = {
 linear_model_map_iv = dict()
 
 
+def handle_resid_std_err(model):
+    if isinstance(model, IVResults):
+        try:
+            resid_std_err = sqrt(model.model_ss / model.df_resid)
+        except ValueError:  # Negative model_ss IV
+            resid_std_err = nan
+    else:
+        resid_std_err = sqrt(model.model_ss / model.df_resid)
+    return resid_std_err
+
+
 def extract_model_data(model):
     data = {}
     if isinstance(model, (PanelEffectsResults, RandomEffectsResults, PanelResults)):
@@ -62,7 +73,7 @@ def extract_model_data(model):
     data["cov_names"] = model.params.index.values
     data["conf_int_low_values"] = model.conf_int().lower
     data["conf_int_high_values"] = model.conf_int().upper
-    data["resid_std_err"] = sqrt(model.model_ss / model.df_resid)
+    data["resid_std_err"] = handle_resid_std_err(model)
     data["f_statistic"] = model.f_statistic.stat
     data["f_p_value"] = model.f_statistic.pval
     data["r2_adj"] = None
