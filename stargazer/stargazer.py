@@ -544,7 +544,7 @@ class HTMLRenderer(Renderer):
                     cov_text += self._float_format(md['conf_int_low_values'][cov_name]) + ' , '
                     cov_text += self._float_format(md['conf_int_high_values'][cov_name])
                 else:
-                    cov_text += self._float_format(md['cov_std_err'][cov_name])
+                    cov_text += self._float_format(md['T_Stat'][cov_name])
                 cov_text += ')</td>'
             else:
                 cov_text += f'<td{spacing}></td>'
