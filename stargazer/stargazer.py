@@ -119,7 +119,7 @@ class Stargazer:
         self.sig_levels = [0.1, 0.05, 0.01]
         self.sig_digits = 3
         self.confidence_intervals = False
-        self.T_statistic = True
+        self.T_statistic = False
         self.show_footer = True
         self.custom_lines = defaultdict(list)
         self.show_n = True
