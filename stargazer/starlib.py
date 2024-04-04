@@ -20,3 +20,12 @@ def _merge_dicts(*dicts):
         merged.update(d)
     return merged
 
+def _find_duplicates(iterable):
+    unique = set()
+    dups = set()
+    for el in iterable:
+        if el in unique:
+            dups.add(el)
+        unique.add(el)
+
+    return dups

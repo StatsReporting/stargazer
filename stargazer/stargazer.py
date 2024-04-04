@@ -19,6 +19,7 @@ import numbers
 import pandas as pd
 
 from .label import Label
+from .starlib import _find_duplicates
 
 RESULTS_CLASSES = {}
 
@@ -238,6 +239,11 @@ class Stargazer:
             Whether covariates not included in "cov_names" should be dropped;
             otherwise, they are just appended, in their default order.
         """
+
+        duplicates = _find_duplicates(cov_names)
+        assert not duplicates, ('Covariates must not be repeated, the '
+                                f'following are: {duplicates}')
+
 
         missing = set(cov_names).difference(set(self.cov_names))
         assert not missing, ('Covariate order must contain subset of existing '
