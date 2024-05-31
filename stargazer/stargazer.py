@@ -144,6 +144,7 @@ class Stargazer:
         for use or modification. They should not be able to
         be modified by any rendering parameters.
         """
+
         self.model_data = []
         for m in self.models:
             self.model_data.append(self.extract_model_data(m))
@@ -344,7 +345,7 @@ class Renderer:
     def __init__(self, table, **kwargs):
         """
         Initialize a new renderer.
-        
+
         "table": Stargazer object to render
         """
 
