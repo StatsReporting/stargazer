@@ -28,6 +28,9 @@ def extract_model_data(model):
     data['cov_values'] = model.coef()
     data['cov_std_err'] = model.se()
     data['p_values'] = model.pvalue()
+    data['conf_int_low_values'] = model.confint().iloc[:,0]
+    data['conf_int_high_values'] = model.confint().iloc[:,1]
+
 
     data['resid_std_err'] = None
     data['degree_freedom_resid'] = None
@@ -35,10 +38,6 @@ def extract_model_data(model):
     data["f_p_value"] = None
     data["r2_adj"] = None
     data["pseudo_r2"] = None
-
-
-    #data['conf_int_low_values'] = model._conf_int[:,0]
-    #data['conf_int_high_values'] = model._conf_int[:,1]
 
     return data
 
