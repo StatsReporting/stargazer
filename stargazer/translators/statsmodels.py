@@ -3,6 +3,7 @@ Compatibility layer with results from statsmodels.
 """
 
 from math import sqrt
+import pandas as pd
 
 from ..starlib import _extract_feature
 
