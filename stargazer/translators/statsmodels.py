@@ -25,7 +25,8 @@ statsmodels_map = {'p_values' : 'pvalues',
                    'degree_freedom' : 'df_model',
                    'degree_freedom_resid' : 'df_resid',
                    'nobs' : 'nobs',
-                   'f_statistic' : 'fvalue'
+                   'f_statistic' : 'fvalue',
+                   'T_Stat' : 'tvalues'
                    }
 
 def extract_model_data(model):
@@ -44,7 +45,7 @@ def extract_model_data(model):
         data['cov_names'] = model.model.data.orig_exog.columns
 
         # These are simple arrays, not Series:
-        for what in 'cov_values', 'p_values', 'cov_std_err':
+        for what in 'cov_values', 'p_values', 'cov_std_err', 'T_Stat':
             data[what] = pd.Series(data[what],
                                    index=data['cov_names'])
 

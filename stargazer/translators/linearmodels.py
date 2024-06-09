@@ -24,6 +24,7 @@ linearmodels_map_base = {
     "degree_freedom": "df_model",
     "degree_freedom_resid": "df_resid",
     "nobs": "nobs",
+    "T_Stat": "tvalues"
 }
 
 # Mapping for linearmodels key parameters
