@@ -13,3 +13,10 @@ try:
 except ModuleNotFoundError:
     # linearmodels not found
     pass
+
+### PYFIXEST ###
+try:
+    from .pyfixest import classes
+except ModuleNotFoundError:
+    # pyfixest not found
+    pass
