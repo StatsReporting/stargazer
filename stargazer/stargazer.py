@@ -124,6 +124,7 @@ class Stargazer:
         self.sig_levels = [0.1, 0.05, 0.01]
         self.sig_digits = 3
         self.confidence_intervals = False
+        self.T_statistic = False
         self.show_footer = True
         self.custom_lines = defaultdict(list)
         self.show_n = True
@@ -227,6 +228,10 @@ class Stargazer:
     def show_confidence_intervals(self, show):
         assert type(show) == bool, 'Please input True/False'
         self.confidence_intervals = show
+    
+    def show_T_Stat(self, show):
+        assert type(show) == bool, 'Please input True/False'
+        self.T_statistic = show
 
     def dependent_variable_name(self, name):
         assert type(name) == str, 'Please input a string to use as the depedent variable name'
@@ -554,8 +559,11 @@ class HTMLRenderer(Renderer):
                 if self.confidence_intervals:
                     cov_text += self._float_format(md['conf_int_low_values'][cov_name]) + ' , '
                     cov_text += self._float_format(md['conf_int_high_values'][cov_name])
+                elif self.T_statistic:
+                    cov_text += self._float_format(md['T_Stat'][cov_name])
                 else:
                     cov_text += self._float_format(md['cov_std_err'][cov_name])
+
                 cov_text += ')</td>'
             else:
                 cov_text += f'<td{spacing}></td>'
